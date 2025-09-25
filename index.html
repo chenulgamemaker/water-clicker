@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Water Clicker</title>
+  <style>
+    body { text-align: center; font-family: Arial, sans-serif; }
+    #drop { font-size: 60px; cursor: pointer; }
+    button { margin: 10px; padding: 10px 20px; }
+  </style>
+</head>
+<body>
+  <h1>💧 Water Clicker</h1>
+  <p>Water: <span id="water">0</span></p>
+  <div id="drop">💧</div>
+  <button id="upgrade">Upgrade (cost: 10)</button>
+
+  <script>
+    let water = 0;
+    let perClick = 1;
+    let upgradeCost = 10;
+
+    const waterEl = document.getElementById("water");
+    const dropEl = document.getElementById("drop");
+    const upgradeBtn = document.getElementById("upgrade");
+
+    dropEl.addEventListener("click", () => {
+      water += perClick;
+      waterEl.textContent = water;
+    });
+
+    upgradeBtn.addEventListener("click", () => {
+      if (water >= upgradeCost) {
+        water -= upgradeCost;
+        perClick++;
+        upgradeCost = Math.floor(upgradeCost * 1.5);
+        upgradeBtn.textContent = `Upgrade (cost: ${upgradeCost})`;
+        waterEl.textContent = water;
+      }
+    });
+  </script>
+</body>
+</html>
+
