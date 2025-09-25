@@ -6,38 +6,74 @@
   <style>
     body { text-align: center; font-family: Arial, sans-serif; }
     #drop { font-size: 60px; cursor: pointer; }
-    button { margin: 10px; padding: 10px 20px; }
+    .upgrade { margin: 10px; padding: 10px 20px; }
   </style>
 </head>
 <body>
   <h1>💧 Water Clicker</h1>
   <p>Water: <span id="water">0</span></p>
   <div id="drop">💧</div>
-  <button id="upgrade">Upgrade (cost: 10)</button>
+
+  <h2>Upgrades</h2>
+  <button id="auto" class="upgrade">Buy Auto Clicker (Cost: 50)</button>
+  <button id="multiplier" class="upgrade">Buy Click Multiplier (Cost: 100)</button>
 
   <script>
     let water = 0;
     let perClick = 1;
-    let upgradeCost = 10;
+    let multiplier = 1;
+    let autoRate = 0; // water per second from auto clickers
+
+    // Upgrade costs
+    let autoCost = 50;
+    let multiplierCost = 100;
 
     const waterEl = document.getElementById("water");
     const dropEl = document.getElementById("drop");
-    const upgradeBtn = document.getElementById("upgrade");
+    const autoBtn = document.getElementById("auto");
+    const multiplierBtn = document.getElementById("multiplier");
 
+    // Manual click
     dropEl.addEventListener("click", () => {
-      water += perClick;
-      waterEl.textContent = water;
+      water += perClick * multiplier;
+      updateDisplay();
     });
 
-    upgradeBtn.addEventListener("click", () => {
-      if (water >= upgradeCost) {
-        water -= upgradeCost;
-        perClick++;
-        upgradeCost = Math.floor(upgradeCost * 1.5);
-        upgradeBtn.textContent = `Upgrade (cost: ${upgradeCost})`;
-        waterEl.textContent = water;
+    // Auto Clicker upgrade
+    autoBtn.addEventListener("click", () => {
+      if (water >= autoCost) {
+        water -= autoCost;
+        autoRate += 1; // each auto clicker adds +1 water/sec
+        autoCost = Math.floor(autoCost * 1.5);
+        autoBtn.textContent = `Buy Auto Clicker (Cost: ${autoCost})`;
+        updateDisplay();
       }
     });
+
+    // Click Multiplier upgrade
+    multiplierBtn.addEventListener("click", () => {
+      if (water >= multiplierCost) {
+        water -= multiplierCost;
+        multiplier *= 2; // doubles click power
+        multiplierCost = Math.floor(multiplierCost * 2);
+        multiplierBtn.textContent = `Buy Click Multiplier (Cost: ${multiplierCost})`;
+        updateDisplay();
+      }
+    });
+
+    // Passive auto income
+    setInterval(() => {
+      water += autoRate;
+      updateDisplay();
+    }, 1000);
+
+    function updateDisplay() {
+      waterEl.textContent = water;
+    }
+  </script>
+</body>
+</html>
+
   </script>
 </body>
 </html>
