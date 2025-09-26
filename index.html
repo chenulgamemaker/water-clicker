@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Water Clicker</title>
+  <title>💧 Water Clicker</title>
   <style>
     body { text-align: center; font-family: Arial, sans-serif; background: #e0f7fa; }
     #drop { font-size: 80px; cursor: pointer; }
-    .upgrade { margin: 5px; padding: 8px 12px; }
+    .upgrade { margin: 5px; padding: 8px 12px; display: block; width: 300px; margin-left: auto; margin-right: auto; }
     h2 { margin-top: 20px; }
     #stats { margin-top: 15px; }
+    #leaderboard { margin-top: 20px; border: 1px solid #444; padding: 10px; width: 350px; margin-left: auto; margin-right: auto; background: #fff; }
   </style>
 </head>
 <body>
   <h1>💧 Water Clicker</h1>
+  <p>Player: <span id="playerName"></span></p>
   <p>Water: <span id="water">0</span></p>
   <div id="drop">💧</div>
 
@@ -33,6 +35,9 @@
   <h2>Rebirth</h2>
   <button id="rebirthBtn">✨ Rebirth (Reset for Power!)</button>
 
+  <h2>Leaderboard</h2>
+  <div id="leaderboard"></div>
+
   <script>
     let water = 0;
     let multiplier = 1;
@@ -40,110 +45,156 @@
     let rebirths = 0;
     let rebirthMultiplier = 1;
     let rebirthRequirement = 1e6; // 1M
+    let playerName;
 
-    const waterEl = document.getElementById("water");
-    const multEl = document.getElementById("mult");
-    const autoEl = document.getElementById("auto");
-    const rbEl = document.getElementById("rebirths");
-    const rbmultEl = document.getElementById("rbmult");
-    const rbReqEl = document.getElementById("rbReq");
+    // Random name generator
+    function generateName() {
+      const names = ["WaveRider", "AquaKing", "TideMaster", "KrakenLord", "Poseidon", "HydroHero", "WaterMage"];
+      const rand = Math.floor(Math.random() * names.length);
+      return names[rand] + Math.floor(Math.random() * 1000);
+    }
 
-    // --- CLICK UPGRADES (Full List) ---
+    // Load or create player
+    if (!localStorage.getItem("playerName")) {
+      playerName = generateName();
+      localStorage.setItem("playerName", playerName);
+    } else {
+      playerName = localStorage.getItem("playerName");
+    }
+    document.getElementById("playerName").textContent = playerName;
+
+    // --- CLICK UPGRADES (rebalance: massive scaling) ---
     const clickUpgrades = [
-      { name: "Splash", effect: 1.5, cost: 15 },
-      { name: "Soak", effect: 2, cost: 40 },
-      { name: "Gush", effect: 2.5, cost: 75 },
-      { name: "Surge", effect: 3, cost: 150 },
-      { name: "Torrent", effect: 4, cost: 300 },
-      { name: "Cascade", effect: 5, cost: 600 },
-      { name: "Deluge", effect: 6, cost: 1200 },
-      { name: "Breaker", effect: 7, cost: 2500 },
-      { name: "Typhoon", effect: 8, cost: 5000 },
-      { name: "Cyclone", effect: 10, cost: 10000 },
-      { name: "Maelstrom", effect: 12, cost: 25000 },
-      { name: "Abyss", effect: 15, cost: 50000 },
-      { name: "Trench", effect: 20, cost: 100000 },
-      { name: "Megatsunami", effect: 25, cost: 250000 },
-      { name: "Leviathan", effect: 50, cost: 500000 },
-      { name: "Tsunami Titan", effect: 75, cost: 1e6 },
-      { name: "Ocean Colossus", effect: 100, cost: 2.5e6 },
-      { name: "Poseidon", effect: 150, cost: 5e6 },
-      { name: "Kraken Titan", effect: 200, cost: 1e7 },
-      { name: "Maelstrom Emperor", effect: 250, cost: 2.5e7 },
-      { name: "Leviathan Overlord", effect: 300, cost: 5e7 },
-      { name: "Apocalypse Flood", effect: 500, cost: 1e8 },
-      { name: "Infinity Surge", effect: 10000, cost: 1e21 }
+      { name: "Splash", effect: 2, cost: 15 },
+      { name: "Soak", effect: 5, cost: 40 },
+      { name: "Gush", effect: 10, cost: 75 },
+      { name: "Surge", effect: 25, cost: 150 },
+      { name: "Torrent", effect: 50, cost: 300 },
+      { name: "Cascade", effect: 100, cost: 600 },
+      { name: "Deluge", effect: 500, cost: 1200 },
+      { name: "Breaker", effect: 1_000, cost: 2500 },
+      { name: "Typhoon", effect: 5_000, cost: 5000 },
+      { name: "Cyclone", effect: 10_000, cost: 10000 },
+      { name: "Maelstrom", effect: 50_000, cost: 25000 },
+      { name: "Abyss", effect: 100_000, cost: 50000 },
+      { name: "Trench", effect: 500_000, cost: 100000 },
+      { name: "Megatsunami", effect: 1_000_000, cost: 250000 },
+      { name: "Leviathan", effect: 5_000_000, cost: 500000 },
+      { name: "Tsunami Titan", effect: 10_000_000, cost: 1_000_000 },
+      { name: "Ocean Colossus", effect: 50_000_000, cost: 2_500_000 },
+      { name: "Poseidon", effect: 100_000_000, cost: 5_000_000 },
+      { name: "Kraken Titan", effect: 500_000_000, cost: 10_000_000 },
+      { name: "Maelstrom Emperor", effect: 1_000_000_000, cost: 25_000_000 },
+      { name: "Leviathan Overlord", effect: 5_000_000_000, cost: 50_000_000 },
+      { name: "Apocalypse Flood", effect: 10_000_000_000, cost: 100_000_000 },
+      { name: "Infinity Surge", effect: 10_000_000_000_000, cost: 1e21 }
     ];
 
-    // --- AUTO UPGRADES (Trimmed but scalable) ---
+    // --- AUTO UPGRADES (rebalance: massive scaling) ---
     const autoUpgrades = [
       { name: "Drip", effect: 1, cost: 10 },
       { name: "Droplet", effect: 2, cost: 20 },
       { name: "Puddle", effect: 5, cost: 50 },
       { name: "Stream", effect: 10, cost: 100 },
-      { name: "Brook", effect: 20, cost: 200 },
-      { name: "River", effect: 50, cost: 500 },
-      { name: "Waterfall", effect: 100, cost: 1000 },
-      { name: "Wave", effect: 200, cost: 2000 },
-      { name: "Tide", effect: 500, cost: 5000 },
-      { name: "Current", effect: 1000, cost: 10000 },
-      { name: "Whirlpool", effect: 2500, cost: 25000 },
-      { name: "Flood", effect: 5000, cost: 50000 },
-      { name: "Monsoon", effect: 10000, cost: 1e5 },
-      { name: "Ocean", effect: 25000, cost: 2.5e5 },
-      { name: "Tsunami", effect: 50000, cost: 5e5 },
-      { name: "Abyss", effect: 100000, cost: 1e6 },
+      { name: "Brook", effect: 25, cost: 200 },
+      { name: "River", effect: 100, cost: 500 },
+      { name: "Waterfall", effect: 250, cost: 1000 },
+      { name: "Wave", effect: 1000, cost: 2000 },
+      { name: "Tide", effect: 5_000, cost: 5000 },
+      { name: "Current", effect: 10_000, cost: 10000 },
+      { name: "Whirlpool", effect: 50_000, cost: 25000 },
+      { name: "Flood", effect: 100_000, cost: 50000 },
+      { name: "Monsoon", effect: 500_000, cost: 100000 },
+      { name: "Ocean", effect: 1_000_000, cost: 250000 },
+      { name: "Tsunami", effect: 5_000_000, cost: 500000 },
+      { name: "Abyss", effect: 10_000_000, cost: 1_000_000 },
+      { name: "Trench", effect: 50_000_000, cost: 2_500_000 },
+      { name: "Megatsunami", effect: 100_000_000, cost: 5_000_000 },
+      { name: "Leviathan", effect: 500_000_000, cost: 10_000_000 },
+      { name: "Whirlpool King", effect: 1_000_000_000, cost: 25_000_000 },
+      { name: "Tsunami Lord", effect: 5_000_000_000, cost: 50_000_000 },
+      { name: "Ocean Emperor", effect: 10_000_000_000, cost: 100_000_000 },
+      { name: "Poseidon", effect: 50_000_000_000, cost: 250_000_000 },
+      { name: "Kraken", effect: 100_000_000_000, cost: 500_000_000 },
+      { name: "Maelstrom Titan", effect: 500_000_000_000, cost: 1_000_000_000 },
+      { name: "Leviathan King", effect: 1_000_000_000_000, cost: 2_500_000_000 },
+      { name: "Tsunami Overlord", effect: 5_000_000_000_000, cost: 5_000_000_000 },
+      { name: "Ocean Colossus", effect: 10_000_000_000_000, cost: 10_000_000_000 },
+      { name: "Abyssal Titan", effect: 50_000_000_000_000, cost: 25_000_000_000 },
+      { name: "Trench Lord", effect: 100_000_000_000_000, cost: 50_000_000_000 },
+      { name: "Megatsunami Titan", effect: 500_000_000_000_000, cost: 100_000_000_000 },
+      { name: "Leviathan Emperor", effect: 1_000_000_000_000_000, cost: 250_000_000_000 },
+      { name: "Whirlpool Overlord", effect: 5_000_000_000_000_000, cost: 500_000_000_000 },
+      { name: "Tsunami Colossus", effect: 10_000_000_000_000_000, cost: 1e12 },
+      { name: "Ocean Overlord", effect: 50_000_000_000_000_000, cost: 2.5e12 },
+      { name: "Poseidon King", effect: 100_000_000_000_000_000, cost: 5e12 },
+      { name: "Kraken Titan", effect: 500_000_000_000_000_000, cost: 1e13 },
+      { name: "Maelstrom Emperor", effect: 1_000_000_000_000_000_000, cost: 2.5e13 },
+      { name: "Leviathan Overlord", effect: 5_000_000_000_000_000_000, cost: 5e13 },
+      { name: "Tsunami Titan", effect: 1e19, cost: 1e14 },
+      { name: "Ocean Titan", effect: 5e19, cost: 2.5e14 },
+      { name: "Poseidon Overlord", effect: 1e20, cost: 5e14 },
+      { name: "Leviathan King", effect: 5e20, cost: 1e15 },
+      { name: "Apocalypse Flood", effect: 1e21, cost: 2.5e15 },
       { name: "Infinity Tide", effect: 5e22, cost: 1e24 }
     ];
 
-    // Render upgrades
+    // --- Render upgrades dynamically ---
     function renderUpgrades() {
       const clickDiv = document.getElementById("clickUpgrades");
       clickUpgrades.forEach((upg, i) => {
+        upg.level = 0;
         const btn = document.createElement("button");
         btn.className = "upgrade";
-        btn.textContent = `${upg.name} (x${upg.effect}, Cost: ${upg.cost})`;
-        btn.onclick = () => buyUpgrade(clickUpgrades, i, btn, "click");
+        btn.id = "clickUpg" + i;
+        btn.textContent = `${upg.name} (x${upg.effect}, Cost: ${upg.cost}, Lv: 0)`;
+        btn.onclick = () => buyUpgrade(clickUpgrades, i, "click");
         clickDiv.appendChild(btn);
       });
 
       const autoDiv = document.getElementById("autoUpgrades");
       autoUpgrades.forEach((upg, i) => {
+        upg.level = 0;
         const btn = document.createElement("button");
         btn.className = "upgrade";
-        btn.textContent = `${upg.name} (+${upg.effect}/s, Cost: ${upg.cost})`;
-        btn.onclick = () => buyUpgrade(autoUpgrades, i, btn, "auto");
+        btn.id = "autoUpg" + i;
+        btn.textContent = `${upg.name} (+${upg.effect}/s, Cost: ${upg.cost}, Lv: 0)`;
+        btn.onclick = () => buyUpgrade(autoUpgrades, i, "auto");
         autoDiv.appendChild(btn);
       });
     }
 
-    function buyUpgrade(list, index, button, type) {
+    // --- Buy upgrades (multi-buy with scaling) ---
+    function buyUpgrade(list, index, type) {
       const upg = list[index];
       if (water >= upg.cost) {
         water -= upg.cost;
+        upg.level++;
         if (type === "click") {
-          multiplier *= upg.effect; // stacking multiplier
+          multiplier *= upg.effect;
         } else if (type === "auto") {
           autoRate += upg.effect;
         }
-        button.disabled = true; // one-time
+        upg.cost = Math.floor(upg.cost * 1.5); // scale cost
+        document.getElementById(type + "Upg" + index).textContent =
+          `${upg.name} (${type === "click" ? "x" + upg.effect : "+" + upg.effect + "/s"}, Cost: ${upg.cost}, Lv: ${upg.level})`;
         updateDisplay();
       }
     }
 
-    // Manual click
+    // --- Manual click ---
     document.getElementById("drop").addEventListener("click", () => {
       water += multiplier * rebirthMultiplier;
       updateDisplay();
     });
 
-    // Auto clicks
+    // --- Auto clicks ---
     setInterval(() => {
       water += autoRate * rebirthMultiplier;
       updateDisplay();
     }, 1000);
 
-    // Rebirth
+    // --- Rebirth ---
     document.getElementById("rebirthBtn").addEventListener("click", () => {
       if (rebirths >= 10) {
         alert("Max 10 rebirths reached!");
@@ -151,18 +202,41 @@
       }
       if (water >= rebirthRequirement) {
         rebirths++;
-        rebirthMultiplier *= 2; // doubles power each rebirth
+        rebirthMultiplier *= 2;
         water = 0;
         multiplier = 1;
         autoRate = 0;
-        document.querySelectorAll(".upgrade").forEach(btn => btn.disabled = false);
-        rebirthRequirement *= 100; // requirement grows 100x
+        rebirthRequirement *= 100;
         updateDisplay();
         alert(`✨ Rebirth #${rebirths} complete! Power doubled.`);
       } else {
         alert("Not enough water to rebirth!");
       }
     });
+
+    // --- Leaderboard ---
+    function updateLeaderboard() {
+      let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+      leaderboard.push({ name: playerName, score: water });
+      leaderboard.sort((a, b) => b.score - a.score);
+      leaderboard = leaderboard.slice(0, 10);
+      localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+
+      const lbDiv = document.getElementById("leaderboard");
+      lbDiv.innerHTML = leaderboard.map((p, i) =>
+        `<p>#${i + 1} ${p.name}: ${p.score.toLocaleString()} water</p>`
+      ).join("");
+    }
+
+    setInterval(updateLeaderboard, 2000);
+
+    // --- Update UI ---
+    const waterEl = document.getElementById("water");
+    const multEl = document.getElementById("mult");
+    const autoEl = document.getElementById("auto");
+    const rbEl = document.getElementById("rebirths");
+    const rbmultEl = document.getElementById("rbmult");
+    const rbReqEl = document.getElementById("rbReq");
 
     function updateDisplay() {
       waterEl.textContent = water.toLocaleString();
@@ -175,8 +249,7 @@
 
     renderUpgrades();
     updateDisplay();
+    updateLeaderboard();
   </script>
 </body>
-</html>
-
 </html>
