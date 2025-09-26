@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <title>Water Clicker</title>
   <style>
-    body { text-align: center; font-family: Arial, sans-serif; }
-    #drop { font-size: 60px; cursor: pointer; }
-    .upgrade { margin: 10px; padding: 10px 20px; }
+    body { text-align: center; font-family: Arial, sans-serif; background: #e0f7fa; }
+    #drop { font-size: 80px; cursor: pointer; }
+    .upgrade { margin: 5px; padding: 8px 12px; }
+    h2 { margin-top: 20px; }
+    #stats { margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -14,67 +16,165 @@
   <p>Water: <span id="water">0</span></p>
   <div id="drop">💧</div>
 
-  <h2>Upgrades</h2>
-  <button id="auto" class="upgrade">Buy Auto Clicker (Cost: 50)</button>
-  <button id="multiplier" class="upgrade">Buy Click Multiplier (Cost: 100)</button>
+  <div id="stats">
+    <p>Click Multiplier: <span id="mult">1</span>x</p>
+    <p>Auto Rate: <span id="auto">0</span>/sec</p>
+    <p>Rebirths: <span id="rebirths">0</span> / 10</p>
+    <p>Rebirth Multiplier: <span id="rbmult">1</span>x</p>
+    <p>Next Rebirth Requirement: <span id="rbReq">1,000,000</span> water</p>
+  </div>
+
+  <h2>Click Upgrades</h2>
+  <div id="clickUpgrades"></div>
+
+  <h2>Auto Clickers</h2>
+  <div id="autoUpgrades"></div>
+
+  <h2>Rebirth</h2>
+  <button id="rebirthBtn">✨ Rebirth (Reset for Power!)</button>
 
   <script>
     let water = 0;
-    let perClick = 1;
     let multiplier = 1;
-    let autoRate = 0; // water per second from auto clickers
-
-    // Upgrade costs
-    let autoCost = 50;
-    let multiplierCost = 100;
+    let autoRate = 0;
+    let rebirths = 0;
+    let rebirthMultiplier = 1;
+    let rebirthRequirement = 1e6; // 1M
 
     const waterEl = document.getElementById("water");
-    const dropEl = document.getElementById("drop");
-    const autoBtn = document.getElementById("auto");
-    const multiplierBtn = document.getElementById("multiplier");
+    const multEl = document.getElementById("mult");
+    const autoEl = document.getElementById("auto");
+    const rbEl = document.getElementById("rebirths");
+    const rbmultEl = document.getElementById("rbmult");
+    const rbReqEl = document.getElementById("rbReq");
+
+    // --- CLICK UPGRADES (Full List) ---
+    const clickUpgrades = [
+      { name: "Splash", effect: 1.5, cost: 15 },
+      { name: "Soak", effect: 2, cost: 40 },
+      { name: "Gush", effect: 2.5, cost: 75 },
+      { name: "Surge", effect: 3, cost: 150 },
+      { name: "Torrent", effect: 4, cost: 300 },
+      { name: "Cascade", effect: 5, cost: 600 },
+      { name: "Deluge", effect: 6, cost: 1200 },
+      { name: "Breaker", effect: 7, cost: 2500 },
+      { name: "Typhoon", effect: 8, cost: 5000 },
+      { name: "Cyclone", effect: 10, cost: 10000 },
+      { name: "Maelstrom", effect: 12, cost: 25000 },
+      { name: "Abyss", effect: 15, cost: 50000 },
+      { name: "Trench", effect: 20, cost: 100000 },
+      { name: "Megatsunami", effect: 25, cost: 250000 },
+      { name: "Leviathan", effect: 50, cost: 500000 },
+      { name: "Tsunami Titan", effect: 75, cost: 1e6 },
+      { name: "Ocean Colossus", effect: 100, cost: 2.5e6 },
+      { name: "Poseidon", effect: 150, cost: 5e6 },
+      { name: "Kraken Titan", effect: 200, cost: 1e7 },
+      { name: "Maelstrom Emperor", effect: 1e9, cost: 2.5e7 },
+      { name: "Leviathan Overlord", effect: 1e12, cost: 5e15 },
+      { name: "Apocalypse Flood", effect: 1e15, cost: 1e18 },
+      { name: "Infinity Surge", effect: 1e18, cost: 1e21 }
+    ];
+
+    // --- AUTO UPGRADES (Trimmed but scalable) ---
+    const autoUpgrades = [
+      { name: "Drip", effect: 1, cost: 10 },
+      { name: "Droplet", effect: 2, cost: 20 },
+      { name: "Puddle", effect: 5, cost: 50 },
+      { name: "Stream", effect: 10, cost: 100 },
+      { name: "Brook", effect: 20, cost: 200 },
+      { name: "River", effect: 50, cost: 500 },
+      { name: "Waterfall", effect: 100, cost: 1000 },
+      { name: "Wave", effect: 200, cost: 2000 },
+      { name: "Tide", effect: 500, cost: 5000 },
+      { name: "Current", effect: 1000, cost: 10000 },
+      { name: "Whirlpool", effect: 2500, cost: 25000 },
+      { name: "Flood", effect: 5000, cost: 50000 },
+      { name: "Monsoon", effect: 10000, cost: 1e5 },
+      { name: "Ocean", effect: 25000, cost: 2.5e5 },
+      { name: "Tsunami", effect: 50000, cost: 5e5 },
+      { name: "Abyss", effect: 100000, cost: 1e6 },
+      { name: "Infinity Tide", effect: 5e22, cost: 1e24 }
+    ];
+
+    // Render upgrades
+    function renderUpgrades() {
+      const clickDiv = document.getElementById("clickUpgrades");
+      clickUpgrades.forEach((upg, i) => {
+        const btn = document.createElement("button");
+        btn.className = "upgrade";
+        btn.textContent = `${upg.name} (x${upg.effect}, Cost: ${upg.cost})`;
+        btn.onclick = () => buyUpgrade(clickUpgrades, i, btn, "click");
+        clickDiv.appendChild(btn);
+      });
+
+      const autoDiv = document.getElementById("autoUpgrades");
+      autoUpgrades.forEach((upg, i) => {
+        const btn = document.createElement("button");
+        btn.className = "upgrade";
+        btn.textContent = `${upg.name} (+${upg.effect}/s, Cost: ${upg.cost})`;
+        btn.onclick = () => buyUpgrade(autoUpgrades, i, btn, "auto");
+        autoDiv.appendChild(btn);
+      });
+    }
+
+    function buyUpgrade(list, index, button, type) {
+      const upg = list[index];
+      if (water >= upg.cost) {
+        water -= upg.cost;
+        if (type === "click") {
+          multiplier *= upg.effect; // stacking multiplier
+        } else if (type === "auto") {
+          autoRate += upg.effect;
+        }
+        button.disabled = true; // one-time
+        updateDisplay();
+      }
+    }
 
     // Manual click
-    dropEl.addEventListener("click", () => {
-      water += perClick * multiplier;
+    document.getElementById("drop").addEventListener("click", () => {
+      water += multiplier * rebirthMultiplier;
       updateDisplay();
     });
 
-    // Auto Clicker upgrade
-    autoBtn.addEventListener("click", () => {
-      if (water >= autoCost) {
-        water -= autoCost;
-        autoRate += 1; // each auto clicker adds +1 water/sec
-        autoCost = Math.floor(autoCost * 1.5);
-        autoBtn.textContent = `Buy Auto Clicker (Cost: ${autoCost})`;
-        updateDisplay();
-      }
-    });
-
-    // Click Multiplier upgrade
-    multiplierBtn.addEventListener("click", () => {
-      if (water >= multiplierCost) {
-        water -= multiplierCost;
-        multiplier *= 2; // doubles click power
-        multiplierCost = Math.floor(multiplierCost * 2);
-        multiplierBtn.textContent = `Buy Click Multiplier (Cost: ${multiplierCost})`;
-        updateDisplay();
-      }
-    });
-
-    // Passive auto income
+    // Auto clicks
     setInterval(() => {
-      water += autoRate;
+      water += autoRate * rebirthMultiplier;
       updateDisplay();
     }, 1000);
 
+    // Rebirth
+    document.getElementById("rebirthBtn").addEventListener("click", () => {
+      if (rebirths >= 10) {
+        alert("Max 10 rebirths reached!");
+        return;
+      }
+      if (water >= rebirthRequirement) {
+        rebirths++;
+        rebirthMultiplier *= 2; // doubles power each rebirth
+        water = 0;
+        multiplier = 1;
+        autoRate = 0;
+        document.querySelectorAll(".upgrade").forEach(btn => btn.disabled = false);
+        rebirthRequirement *= 100; // requirement grows 100x
+        updateDisplay();
+        alert(`✨ Rebirth #${rebirths} complete! Power doubled.`);
+      } else {
+        alert("Not enough water to rebirth!");
+      }
+    });
+
     function updateDisplay() {
-      waterEl.textContent = water;
+      waterEl.textContent = water.toLocaleString();
+      multEl.textContent = multiplier.toLocaleString();
+      autoEl.textContent = autoRate.toLocaleString();
+      rbEl.textContent = rebirths;
+      rbmultEl.textContent = rebirthMultiplier.toLocaleString();
+      rbReqEl.textContent = rebirthRequirement.toLocaleString();
     }
+
+    renderUpgrades();
+    updateDisplay();
   </script>
 </body>
 </html>
-
-  </script>
-</body>
-</html>
-
