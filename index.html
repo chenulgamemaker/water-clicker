@@ -1,42 +1,39 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Water Clicker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Clicker Game</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>💧 Water Clicker</h1>
-
 <div id="loginDiv">
-  <h3>Login</h3>
-  Username: <input type="text" id="username"><br>
-  Password: <input type="password" id="password"><br>
+  <h2>Login</h2>
+  <input type="text" id="username" placeholder="Username"><br>
+  <input type="password" id="password" placeholder="Password"><br>
   <button onclick="login()">Login</button>
+  <button onclick="showRegister()">Register</button>
+</div>
+
+<div id="registerDiv" style="display:none;">
+  <h2>Register</h2>
+  <input type="text" id="regUsername" placeholder="Username"><br>
+  <input type="password" id="regPassword" placeholder="Password"><br>
+  <button onclick="register()">Register</button>
+  <button onclick="showLogin()">Back to Login</button>
 </div>
 
 <div id="gameDiv" style="display:none;">
-  <h2 id="welcome"></h2>
-  <div id="gameContainer">
-    <button id="clickButton" onclick="clickWater()"></button>
-    <div id="stats">
-      <p>Water: <span id="waterCount">0</span></p>
-      <p>Multiplier: <span id="multiplier">1</span></p>
-      <p>Rebirths: <span id="rebirths">0</span></p>
-      <p>Prestige: <span id="prestige">0</span></p>
-    </div>
-  </div>
-
-  <h3>Upgrades</h3>
-  <div id="upgradeDiv" class="horizontal"></div>
-
-  <h3>Auto Clickers</h3>
-  <div id="autoClickerDiv" class="horizontal"></div>
+  <h2 id="welcome">Welcome</h2>
+  <button id="waterBtn" onclick="clickWater()">💧</button>
+  <div id="waterCount">0 💧</div>
+  <div id="upgrades"></div>
+  <div id="leaderboard"></div>
+  <div id="adminPanel" style="display:none;"></div>
 </div>
-
-<div id="adminPanel"></div>
 
 <script src="game.js"></script>
 </body>
 </html>
+
