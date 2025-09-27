@@ -1,88 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Water Clicker</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #e0f7fa; }
-    #gameScreen { margin-top: 20px; }
-    .upgrade { margin: 5px; padding: 10px; border: 1px solid #00796b; border-radius: 5px; background: #b2dfdb; }
-    button { margin: 5px; padding: 10px; cursor: pointer; }
-    #leaderboard { margin-top: 20px; text-align: left; width: 300px; margin-left: auto; margin-right: auto; }
-
-    /* Horizontal layout */
-    #upgradesContainer {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 20px;
-      margin-top: 30px;
-    }
-    #clickUpgrades, #autoUpgrades {
-      max-height: 400px;
-      overflow-y: auto;
-      width: 200px;
-    }
-
-    /* Water button */
-    #waterButton {
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #81d4fa, #0288d1);
-      box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3), 5px 5px 15px rgba(0,0,0,0.2);
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-      color: white;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Water Clicker</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; background: #e0f7fa; }
+  #gameScreen { margin-top: 20px; }
+  .upgrade { margin: 5px; padding: 10px; border: 1px solid #00796b; border-radius: 5px; background: #b2dfdb; display: inline-block; }
+  button { margin: 5px; padding: 10px; cursor: pointer; }
+  #leaderboard { margin-top: 20px; text-align: left; width: 500px; margin-left: auto; margin-right: auto; }
+  #upgradesContainer { display: flex; justify-content: space-between; width: 90%; margin: 0 auto; }
+  #clickUpgrades, #autoUpgrades { display: flex; overflow-x: auto; max-width: 48%; }
+  #clickWaterBtn { font-size: 50px; width: 150px; height: 150px; border-radius: 50%; border: 3px solid #0288d1; background: #03a9f4 url('https://cdn-icons-png.flaticon.com/512/54/54709.png') center/contain no-repeat; margin: 20px auto; display: block; transition: transform 0.1s; }
+  #clickWaterBtn:active { transform: scale(1.2); }
+</style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginScreen">
-    <h2>🌊 Water Clicker - Login</h2>
-    <input id="loginName" type="text" placeholder="Username"><br>
-    <input id="loginPass" type="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
+<div id="loginScreen">
+  <h2>🌊 Water Clicker - Login</h2>
+  <input id="loginName" type="text" placeholder="Username"><br>
+  <input id="loginPass" type="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="register()">Register</button>
+</div>
+
+<div id="gameScreen" style="display:none;">
+  <h2 id="playerNameDisplay"></h2>
+  <button onclick="logout()">Logout</button>
+  <hr>
+
+  <h1>💧 Water: <span id="water">0</span></h1>
+  <h3>Multiplier: <span id="multiplier">1</span> | Auto: <span id="autoRate">0</span>/s</h3>
+  <h3>Rebirths: <span id="rebirths">0</span> | Next Rebirth: <span id="rebirthReq">1,000,000</span></h3>
+  <h3>Prestige: <span id="prestige">0</span> | Next Prestige: <span id="prestigeReq">1,000,000,000,000</span></h3>
+
+  <button id="clickWaterBtn" onclick="clickWater()"></button>
+  <button onclick="rebirth()">🔄 Rebirth</button>
+  <button onclick="prestige()">✨ Prestige</button>
+  <br>
+  <button onclick="saveGame()">💾 Save</button>
+  <button onclick="loadAccount()">📂 Load</button>
+  <button onclick="resetAccount()">⚠️ Hard Reset</button>
+
+  <div id="upgradesContainer">
+    <div id="clickUpgrades"></div>
+    <div id="autoUpgrades"></div>
   </div>
 
-  <!-- GAME SCREEN -->
-  <div id="gameScreen" style="display:none;">
-    <h2 id="playerNameDisplay"></h2>
-    <button onclick="logout()">Logout</button>
-    <hr>
-
-    <h1>💧 Water: <span id="water">0</span></h1>
-    <h3>Multiplier: <span id="multiplier">1</span> | Auto: <span id="autoRate">0</span>/s</h3>
-    <h3>Rebirths: <span id="rebirths">0</span> | Next Rebirth: <span id="rebirthReq">1,000,000</span></h3>
-    <h3>Prestige: <span id="prestige">0</span> | Next Prestige: <span id="prestigeReq">1,000,000,000,000</span></h3>
-
-    <!-- Horizontal layout -->
-    <div id="upgradesContainer">
-      <div id="clickUpgrades"></div>
-      <button id="waterButton" onclick="clickWater()">💧</button>
-      <div id="autoUpgrades"></div>
-    </div>
-
-    <br>
-    <button onclick="rebirth()">🔄 Rebirth</button>
-    <button onclick="prestige()">✨ Prestige</button>
-    <br>
-    <button onclick="saveGame()">💾 Save</button>
-    <button onclick="loadAccount()">📂 Load</button>
-    <button onclick="resetAccount()">⚠️ Hard Reset</button>
-
-    <h2>🏆 Leaderboard</h2>
-    <div id="leaderboard"></div>
-  </div>
+  <h2>🏆 Leaderboard</h2>
+  <div id="leaderboard"></div>
+</div>
 
 <script>
-// --- GAME VARIABLES ---
 let water = 0;
 let multiplier = 1;
 let autoRate = 0;
@@ -94,7 +64,7 @@ let prestigeMultiplier = 1;
 let prestigeRequirement = 1e12;
 let currentUser = null;
 
-// --- CLICK UPGRADES ---
+// --- CLICK UPGRADES LIST ---
 const clickUpgrades = [
   { name: "Drip", effect: 2, cost: 5, level: 0 },
   { name: "Splash", effect: 5, cost: 10, level: 0 },
@@ -159,7 +129,8 @@ const clickUpgrades = [
   { name: "Omega Leviathan Emperor", effect: 2e20, cost: 5e20, level: 0 },
   { name: "Infinity Ocean Emperor", effect: 5e20, cost: 1e21, level: 0 }
 ];
-// --- AUTO UPGRADES ---
+
+// --- AUTO CLICKER UPGRADES LIST ---
 const autoUpgrades = [
   { name: "Drizzle", effect: 5, cost: 10, level: 0 },
   { name: "Trickle", effect: 15, cost: 30, level: 0 },
@@ -216,35 +187,10 @@ const autoUpgrades = [
   { name: "Omega Flood Prime", effect: 5e21, cost: 1e22, level: 0 },
   { name: "Infinity Leviathan Prime", effect: 1.2e22, cost: 2.5e22, level: 0 },
   { name: "Supernova Ocean Prime", effect: 3e22, cost: 6e22, level: 0 }
+  { name: "infinity tide", effect: 1e23, cost: 1e24, level: 0 }
 ];
 
-// --- OWNER ACCOUNT CREATION ---
-(function createOwnerAccount() {
-  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
-  if (!accounts["chenulowner"]) {
-    accounts["chenulowner"] = {
-      password: "chenulispro123",
-      owner: true,
-      data: {
-        water: 1e21,  // 1 sextillion
-        multiplier: 1,
-        autoRate: 0,
-        rebirths: 0,
-        rebirthMultiplier: 1,
-        rebirthRequirement: 1e6,
-        prestiges: 0,
-        prestigeMultiplier: 1,
-        prestigeRequirement: 1e12,
-        clickUpgrades: clickUpgrades.map(u => ({...u})), 
-        autoUpgrades: autoUpgrades.map(u => ({...u}))
-      }
-    };
-    localStorage.setItem("accounts", JSON.stringify(accounts));
-    console.log("Owner account created: chenulowner");
-  }
-})();
-
-// --- GAME LOOP ---
+// --- GAME FUNCTIONS ---
 function clickWater() {
   water += multiplier * rebirthMultiplier * prestigeMultiplier;
   updateDisplay();
@@ -255,19 +201,6 @@ setInterval(() => {
   updateDisplay();
 }, 1000);
 
-// --- BUY UPGRADE ---
-function buyUpgrade(list, index) {
-  const u = list[index];
-  if (water >= u.cost) {
-    water -= u.cost;
-    if (list === clickUpgrades) multiplier *= u.effect;
-    else autoRate += u.effect;
-    u.level++; u.cost = Math.floor(u.cost * 1.5);
-    updateDisplay(); saveGame();
-  }
-}
-
-// --- REBIRTH ---
 function rebirth() {
   if (water >= rebirthRequirement && rebirths < 10) {
     rebirths++;
@@ -281,7 +214,6 @@ function rebirth() {
   }
 }
 
-// --- PRESTIGE ---
 function prestige() {
   if (rebirths >= 10 && water >= prestigeRequirement) {
     prestiges++;
@@ -296,86 +228,17 @@ function prestige() {
   }
 }
 
-// --- SAVE / LOAD ---
-function saveGame() {
-  if (!currentUser) return;
-  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
-  accounts[currentUser].data = { 
-    water, multiplier, autoRate, rebirths, rebirthMultiplier, rebirthRequirement,
-    prestiges, prestigeMultiplier, prestigeRequirement, 
-    clickUpgrades, autoUpgrades 
-  };
-  localStorage.setItem("accounts", JSON.stringify(accounts));
-}
-
-function loadAccount() {
-  if (!currentUser) return;
-  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
-  loadGame(accounts[currentUser].data); updateDisplay();
-}
-
-function loadGame(data) {
-  if (!data) return;
-  water = data.water || 0;
-  multiplier = data.multiplier || 1;
-  autoRate = data.autoRate || 0;
-  rebirths = data.rebirths || 0;
-  rebirthMultiplier = data.rebirthMultiplier || 1;
-  rebirthRequirement = data.rebirthRequirement || 1e6;
-  prestiges = data.prestiges || 0;
-  prestigeMultiplier = data.prestigeMultiplier || 1;
-  prestigeRequirement = data.prestigeRequirement || 1e12;
-  if (data.clickUpgrades) clickUpgrades.forEach((u, i) => Object.assign(u, data.clickUpgrades[i]));
-  if (data.autoUpgrades) autoUpgrades.forEach((u, i) => Object.assign(u, data.autoUpgrades[i]));
-}
-
-// --- LOGIN SYSTEM ---
-function login() {
-  const username = document.getElementById("loginName").value.trim();
-  const password = document.getElementById("loginPass").value;
-  if (!username || !password) { alert("Enter both username and password!"); return; }
-  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
-  if (accounts[username]) {
-    if (accounts[username].password === password) {
-      currentUser = username;
-      const isOwner = accounts[username].owner;
-      document.getElementById("playerNameDisplay").innerText = (isOwner ? "⭐ Owner: " : "Player: ") + username;
-      loadGame(accounts[username].data);
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("gameScreen").style.display = "block";
-      updateDisplay();
-    } else alert("Wrong password!");
-  } else alert("Account not found. Please register.");
-}
-
-function register() {
-  const username = document.getElementById("loginName").value.trim();
-  const password = document.getElementById("loginPass").value;
-  if (!username || !password) { alert("Enter both username and password!"); return; }
-  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
-  if (accounts[username]) { alert("Username already exists!"); return; }
-  accounts[username] = { password, data: {} };
-  localStorage.setItem("accounts", JSON.stringify(accounts));
-  alert("Account created! You can now log in.");
-}
-
-function logout() {
-  saveGame();
-  currentUser = null;
-  document.getElementById("gameScreen").style.display = "none";
-  document.getElementById("loginScreen").style.display = "block";
-}
-
-// --- RESET ACCOUNT ---
-function resetAccount() {
-  if (!currentUser) return;
-  if (!confirm("Are you sure you want to reset your account?")) return;
-  water = 0; multiplier = 1; autoRate = 0;
-  rebirths = 0; rebirthMultiplier = 1; rebirthRequirement = 1e6;
-  prestiges = 0; prestigeMultiplier = 1; prestigeRequirement = 1e12;
-  clickUpgrades.forEach(u => u.level = 0);
-  autoUpgrades.forEach(u => u.level = 0);
-  saveGame(); updateDisplay();
+function buyUpgrade(list, index) {
+  const u = list[index];
+  if (water >= u.cost) {
+    water -= u.cost;
+    if (list === clickUpgrades) multiplier += u.effect;
+    else autoRate += u.effect;
+    u.level++;
+    u.cost = Math.floor(u.cost * 1.5);
+    updateDisplay();
+    saveGame();
+  }
 }
 
 // --- UI UPDATE ---
@@ -405,21 +268,90 @@ function updateDisplay() {
   updateLeaderboard();
 }
 
+// --- SAVE / LOAD ---
+function saveGame() {
+  if (!currentUser) return;
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  accounts[currentUser].data = { 
+    water, multiplier, autoRate, rebirths, rebirthMultiplier, rebirthRequirement,
+    prestiges, prestigeMultiplier, prestigeRequirement, 
+    clickUpgrades, autoUpgrades 
+  };
+  localStorage.setItem("accounts", JSON.stringify(accounts));
+}
+
+function loadAccount() {
+  if (!currentUser) return;
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  loadGame(accounts[currentUser].data); 
+  updateDisplay();
+}
+
+function loadGame(data) {
+  if (!data) return;
+  water = data.water || 0;
+  multiplier = data.multiplier || 1;
+  autoRate = data.autoRate || 0;
+  rebirths = data.rebirths || 0;
+  rebirthMultiplier = data.rebirthMultiplier || 1;
+  rebirthRequirement = data.rebirthRequirement || 1e6;
+  prestiges = data.prestiges || 0;
+  prestigeMultiplier = data.prestigeMultiplier || 1;
+  prestigeRequirement = data.prestigeRequirement || 1e12;
+  if (data.clickUpgrades) clickUpgrades.forEach((u, i) => Object.assign(u, data.clickUpgrades[i]));
+  if (data.autoUpgrades) autoUpgrades.forEach((u, i) => Object.assign(u, data.autoUpgrades[i]));
+}
+
 // --- LEADERBOARD ---
 function updateLeaderboard() {
   const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
-  const scores = [];
-  for (let user in accounts) {
-    const d = accounts[user].data || {};
-    scores.push({ name: user, prestiges: d.prestiges || 0, rebirths: d.rebirths || 0, water: d.water || 0 });
-  }
-  scores.sort((a, b) => b.prestiges - a.prestiges || b.rebirths - a.rebirths || b.water - a.water);
-  const board = document.getElementById("leaderboard");
-  board.innerHTML = scores.slice(0, 10).map((s, i) => 
-    `${i+1}. ${s.name} - Prestige: ${s.prestiges}, Rebirths: ${s.rebirths}, Water: ${s.water.toLocaleString()}`
-  ).join("<br>");
+  const sorted = Object.entries(accounts).sort((a,b) => (b[1].data?.water || 0) - (a[1].data?.water || 0));
+  const lb = sorted.slice(0, 5).map((e,i) => `${i+1}. ${e[0]} - ${e[1].data?.water.toLocaleString() || 0} 💧`).join("<br>");
+  document.getElementById("leaderboard").innerHTML = lb;
 }
-</script>
 
+// --- LOGIN SYSTEM ---
+function login() {
+  const name = document.getElementById("loginName").value;
+  const pass = document.getElementById("loginPass").value;
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  if (accounts[name] && accounts[name].pass === pass) {
+    currentUser = name;
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "block";
+    document.getElementById("playerNameDisplay").innerText = "Player: " + name;
+    loadAccount();
+  } else alert("Invalid credentials!");
+}
+
+function register() {
+  const name = document.getElementById("loginName").value;
+  const pass = document.getElementById("loginPass").value;
+  let accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  if (accounts[name]) { alert("Account already exists!"); return; }
+  accounts[name] = { pass, data: { water: 0, multiplier: 1, autoRate: 0, rebirths: 0, rebirthMultiplier: 1, rebirthRequirement: 1e6, prestiges: 0, prestigeMultiplier: 1, prestigeRequirement: 1e12 } };
+  localStorage.setItem("accounts", JSON.stringify(accounts));
+  alert("Registered successfully!");
+}
+
+// --- LOGOUT / RESET ---
+function logout() { currentUser=null; location.reload(); }
+function resetAccount() {
+  if (!currentUser) return;
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  accounts[currentUser].data = null;
+  localStorage.setItem("accounts", JSON.stringify(accounts));
+  location.reload();
+}
+
+// --- OWNER ACCOUNT ---
+(function(){
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  if(!accounts["chenulowner"]) {
+    accounts["chenulowner"] = { pass: "chenulispro123", data: { water: 100000, multiplier: 1, autoRate: 0, rebirths: 0, rebirthMultiplier: 1, rebirthRequirement: 1e6, prestiges: 0, prestigeMultiplier: 1, prestigeRequirement: 1e12 } };
+    localStorage.setItem("accounts", JSON.stringify(accounts));
+  }
+})();
+</script>
 </body>
 </html>
