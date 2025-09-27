@@ -1,5 +1,7 @@
-// ================== Data ==================
-const clickers = [ 
+let currentUser = null;
+
+// Initial Clickers & AutoClickers
+const Clickers = [ 
   { name: "Drip", effect: 2, cost: 5, level: 0 },
   { name: "Splash", effect: 5, cost: 10, level: 0 },
   { name: "Droplet", effect: 10, cost: 20, level: 0 },
@@ -63,8 +65,7 @@ const clickers = [
   { name: "Omega Leviathan Emperor", effect: 2e20, cost: 5e20, level: 0 },
   { name: "Infinity Ocean Emperor", effect: 5e20, cost: 1e21, level: 0 }
 ];
-
-const autoClickers = [
+const AutoClickers = [
   { name: "Drizzle", effect: 5, cost: 10, level: 0 },
   { name: "Trickle", effect: 15, cost: 30, level: 0 },
   { name: "Rill", effect: 50, cost: 120, level: 0 },
@@ -123,176 +124,149 @@ const autoClickers = [
   { name: "infinity tide", effect: 1e23, cost: 1e24, level: 0 }
 ];
 
-let currentUser = null;
+// LocalStorage handling
+function loadAccounts() {
+  return JSON.parse(localStorage.getItem("accounts")||"{}");
+}
+function saveAccounts(accounts){
+  localStorage.setItem("accounts", JSON.stringify(accounts));
+}
 
-// ================== Storage ==================
-function loadAccounts() { return JSON.parse(localStorage.getItem("accounts")||"{}"); }
-function saveAccounts(accounts) { localStorage.setItem("accounts", JSON.stringify(accounts)); }
+// Show register/login
+function showRegister(){document.getElementById("loginDiv").style.display="none";document.getElementById("registerDiv").style.display="block";}
+function showLogin(){document.getElementById("registerDiv").style.display="none";document.getElementById("loginDiv").style.display="block";}
 
-// ================== Login ==================
-function login() {
-  let username = document.getElementById("username").value.trim();
-  let password = document.getElementById("password").value.trim();
+// Register
+function register(){
+  let username=document.getElementById("regUsername").value.trim();
+  let password=document.getElementById("regPassword").value.trim();
   if(!username||!password)return alert("Enter username/password!");
+  
   let accounts = loadAccounts();
+  if(accounts[username]) return alert("Username already exists!");
+  if(username==="chenulowner") return alert("Reserved username!");
   
-  if(!accounts["chenulowner"]){
-    accounts["chenulowner"]={password:"chenulwater", water:0, multiplier:1, rebirths:0, prestige:0, clickers:[], autoClickers:[], upgrades:[], owner:true};
-    saveAccounts(accounts);
-  }
-  
+  accounts[username]={password, water:0, multiplier:1, clickers:[], autoClickers:[], owner:false};
+  saveAccounts(accounts);
+  alert("Account created!");
+  showLogin();
+}
+
+// Login
+function login(){
+  let username=document.getElementById("username").value.trim();
+  let password=document.getElementById("password").value.trim();
+  if(!username||!password)return alert("Enter username/password!");
+
+  let accounts=loadAccounts();
+  // Ensure owner exists
+  if(!accounts["chenulowner"]) accounts["chenulowner"]={password:"chenulwater", water:0, multiplier:1, clickers:[], autoClickers:[], owner:true};
+
   if(accounts[username]){
     if(accounts[username].password!==password) return alert("Wrong password!");
-  } else {
-    accounts[username]={password, water:0, multiplier:1, rebirths:0, prestige:0, clickers:[], autoClickers:[], upgrades:[], owner:false};
-    saveAccounts(accounts);
-  }
+  } else return alert("Account does not exist!");
 
   currentUser=username;
   document.getElementById("loginDiv").style.display="none";
   document.getElementById("gameDiv").style.display="block";
   document.getElementById("welcome").innerText=`Welcome ${currentUser}${accounts[currentUser].owner?" 👑":""}`;
   loadGame();
-  if(accounts[currentUser].owner) loadAdminPanel();
 }
 
-// ================== Game ==================
+// Game logic
 function loadGame(){
-  const accounts=loadAccounts();
-  const user=accounts[currentUser];
-  document.getElementById("waterCount").innerText=user.water;
-  document.getElementById("multiplier").innerText=user.multiplier;
-  document.getElementById("rebirths").innerText=user.rebirths;
-  document.getElementById("prestige").innerText=user.prestige;
-
-  const upgradeDiv=document.getElementById("upgradeDiv");
-  upgradeDiv.innerHTML="";
-  clickers.forEach((c,i)=>{
-    let btn=document.createElement("button");
-    btn.className="upgradeBtn";
-    btn.innerText=`${c.name} (Lvl ${user.clickers[i]||0}) Cost: ${c.cost}`;
-    btn.onclick=()=>buyClicker(i);
-    upgradeDiv.appendChild(btn);
-  });
-
-  const autoDiv=document.getElementById("autoClickerDiv");
-  autoDiv.innerHTML="";
-  autoClickers.forEach((a,i)=>{
-    let btn=document.createElement("button");
-    btn.className="upgradeBtn";
-    btn.innerText=`${a.name} (Lvl ${user.autoClickers[i]||0}) Cost: ${a.cost}`;
-    btn.onclick=()=>buyAutoClicker(i);
-    autoDiv.appendChild(btn);
-  });
-
-  startAutoClicks();
+  let accounts = loadAccounts();
+  updateWaterDisplay();
+  createUpgrades();
+  if(accounts[currentUser].owner) loadAdminPanel();
+  updateLeaderboard();
+  setInterval(autoClick, 1000); // AutoClicker every 1s
+  setInterval(saveGame,5000); // Auto save
 }
 
 function clickWater(){
-  const accounts=loadAccounts();
-  accounts[currentUser].water+=accounts[currentUser].multiplier;
+  let accounts=loadAccounts();
+  accounts[currentUser].water+=(accounts[currentUser].multiplier||1);
   saveAccounts(accounts);
-  loadGame();
+  updateWaterDisplay();
+  updateLeaderboard();
 }
 
-function buyClicker(i){
-  const accounts=loadAccounts();
-  const user=accounts[currentUser];
-  const cost=clickers[i].cost;
-  if(user.water>=cost){
-    user.water-=cost;
-    user.clickers[i]=(user.clickers[i]||0)+1;
-    saveAccounts(accounts);
-    loadGame();
-  } else alert("Not enough water!");
+function updateWaterDisplay(){
+  let accounts=loadAccounts();
+  document.getElementById("waterCount").innerText=`${accounts[currentUser].water} 💧`;
 }
 
-function buyAutoClicker(i){
-  const accounts=loadAccounts();
-  const user=accounts[currentUser];
-  const cost=autoClickers[i].cost;
-  if(user.water>=cost){
-    user.water-=cost;
-    user.autoClickers[i]=(user.autoClickers[i]||0)+1;
-    saveAccounts(accounts);
-    loadGame();
-  } else alert("Not enough water!");
-}
-
-function startAutoClicks(){
-  const accounts=loadAccounts();
-  const user=accounts[currentUser];
-  autoClickers.forEach((a,i)=>{
-    if(user.autoClickers[i]&&user.autoClickers[i]>0){
-      setInterval(()=>{
-        const accounts2=loadAccounts();
-        accounts2[currentUser].water+=a.effect*user.autoClickers[i];
-        saveAccounts(accounts2);
-        loadGame();
-      },1000);
-    }
+// Upgrades
+function createUpgrades(){
+  const div=document.getElementById("upgrades");
+  div.innerHTML="";
+  Clickers.forEach((u,i)=>{
+    const btn=document.createElement("button");
+    btn.innerText=`${u.name} (Level ${u.level||0}) - ${u.cost} 💧`;
+    btn.onclick=()=>buyUpgrade(i);
+    div.appendChild(btn);
   });
 }
 
-// ================== Admin ==================
+function buyUpgrade(i){
+  let accounts=loadAccounts();
+  const u=Clickers[i];
+  if(accounts[currentUser].water<u.cost)return alert("Not enough water!");
+  accounts[currentUser].water-=u.cost;
+  u.level=(u.level||0)+1;
+  accounts[currentUser].multiplier+=(u.effect);
+  saveAccounts(accounts);
+  createUpgrades();
+  updateWaterDisplay();
+  updateLeaderboard();
+}
+
+// AutoClickers
+function autoClick(){
+  let accounts=loadAccounts();
+  AutoClickers.forEach((ac)=>{
+    accounts[currentUser].water+=ac.effect*(ac.level||0);
+  });
+  saveAccounts(accounts);
+  updateWaterDisplay();
+  updateLeaderboard();
+}
+
+// Admin panel
 function loadAdminPanel(){
-  const panel=document.getElementById("adminPanel");
-  panel.style.display="block";
-  panel.innerHTML=`
-    <h3>👑 Admin Panel</h3>
-    <div>
-      Player Name: <input type="text" id="adminTargetPlayer" style="width:150px">
-    </div>
-    <div>
-      Water: <input type="number" id="targetWater" style="width:100px"><button onclick="adminSetPlayerWater()">Set</button>
-    </div>
-    <div>
-      Rebirths: <input type="number" id="targetRebirths" style="width:80px"><button onclick="adminSetPlayerRebirth()">Set</button>
-    </div>
-    <div>
-      Prestige: <input type="number" id="targetPrestige" style="width:80px"><button onclick="adminSetPlayerPrestige()">Set</button>
-    </div>
-    <div style="margin-top:4px;">
-      <button onclick="adminResetPlayer()">Reset Player Stats</button>
-    </div>
-  `;
+  const div=document.getElementById("adminPanel");
+  div.style.display="block";
+  div.innerHTML="<h3>Admin Panel</h3>";
+
+  const setWater=document.createElement("input");
+  setWater.placeholder="Set player water";
+  const btnSetWater=document.createElement("button");
+  btnSetWater.innerText="Set Water";
+  btnSetWater.onclick=()=>{
+    const val=Number(setWater.value);
+    const target=prompt("Enter player username:");
+    if(!target||!loadAccounts()[target]) return alert("Player not found!");
+    let accounts=loadAccounts();
+    accounts[target].water=val;
+    saveAccounts(accounts);
+    updateLeaderboard();
+    updateWaterDisplay();
+  };
+  div.appendChild(setWater);
+  div.appendChild(btnSetWater);
 }
 
-function getTargetPlayer(){
-  const name=document.getElementById("adminTargetPlayer").value.trim();
-  if(!name){ alert("Enter a player name!"); return null; }
+// Leaderboard
+function updateLeaderboard(){
   const accounts=loadAccounts();
-  if(!accounts[name]){ alert("Player not found!"); return null; }
-  return { name, accounts };
+  const sorted=Object.entries(accounts).filter(([n,d])=>!d.owner).sort((a,b)=>b[1].water-a[1].water).slice(0,10);
+  const lb=document.getElementById("leaderboard");
+  lb.innerHTML="<h3>🏆 Leaderboard</h3>";
+  sorted.forEach(([name,data],i)=>{
+    lb.innerHTML+=`${i+1}. ${name} - ${data.water} 💧<br>`;
+  });
 }
 
-function adminSetPlayerWater(){
-  const target=getTargetPlayer(); if(!target) return;
-  const val=parseFloat(document.getElementById("targetWater").value)||0;
-  target.accounts[target.name].water=val;
-  saveAccounts(target.accounts);
-  alert(`Water set for ${target.name}`);
-}
-
-function adminSetPlayerRebirth(){
-  const target=getTargetPlayer(); if(!target) return;
-  const val=parseInt(document.getElementById("targetRebirths").value)||0;
-  target.accounts[target.name].rebirths=val;
-  saveAccounts(target.accounts);
-  alert(`Rebirths set for ${target.name}`);
-}
-
-function adminSetPlayerPrestige(){
-  const target=getTargetPlayer(); if(!target) return;
-  const val=parseInt(document.getElementById("targetPrestige").value)||0;
-  target.accounts[target.name].prestige=val;
-  saveAccounts(target.accounts);
-  alert(`Prestige set for ${target.name}`);
-}
-
-function adminResetPlayer(){
-  const target=getTargetPlayer(); if(!target) return;
-  target.accounts[target.name]={water:0, rebirths:0, prestige:0, multiplier:1, autoClickers:[], clickers:[], upgrades:[], owner:false};
-  saveAccounts(target.accounts);
-  alert(`Player ${target.name} reset!`);
-}
+// Save
+function saveGame(){saveAccounts(loadAccounts());}
