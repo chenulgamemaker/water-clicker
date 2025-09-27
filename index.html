@@ -2,254 +2,273 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>💧 Water Clicker</title>
+  <title>Water Clicker</title>
   <style>
-    body { text-align: center; font-family: Arial, sans-serif; background: #e0f7fa; }
-    #drop { font-size: 80px; cursor: pointer; }
-    .upgrade { margin: 5px; padding: 8px 12px; display: block; width: 300px; margin-left: auto; margin-right: auto; }
-    h2 { margin-top: 20px; }
-    #stats { margin-top: 15px; }
-    #leaderboard { margin-top: 20px; border: 1px solid #444; padding: 10px; width: 350px; margin-left: auto; margin-right: auto; background: #fff; }
+    body { font-family: Arial, sans-serif; text-align: center; background: #e0f7fa; }
+    #gameScreen { margin-top: 20px; }
+    .upgrade { margin: 5px; padding: 10px; border: 1px solid #00796b; border-radius: 5px; background: #b2dfdb; }
+    button { margin: 5px; padding: 10px; }
+    #leaderboard { margin-top: 20px; text-align: left; width: 300px; margin-left: auto; margin-right: auto; }
   </style>
 </head>
 <body>
-  <h1>💧 Water Clicker</h1>
-  <p>Player: <span id="playerName"></span></p>
-  <p>Water: <span id="water">0</span></p>
-  <div id="drop">💧</div>
 
-  <div id="stats">
-    <p>Click Multiplier: <span id="mult">1</span>x</p>
-    <p>Auto Rate: <span id="auto">0</span>/sec</p>
-    <p>Rebirths: <span id="rebirths">0</span> / 10</p>
-    <p>Rebirth Multiplier: <span id="rbmult">1</span>x</p>
-    <p>Next Rebirth Requirement: <span id="rbReq">1,000,000</span> water</p>
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <h2>🌊 Water Clicker - Login</h2>
+    <input id="loginName" type="text" placeholder="Username"><br>
+    <input id="loginPass" type="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
   </div>
 
-  <h2>Click Upgrades</h2>
-  <div id="clickUpgrades"></div>
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" style="display:none;">
+    <h2 id="playerNameDisplay"></h2>
+    <button onclick="logout()">Logout</button>
+    <hr>
 
-  <h2>Auto Clickers</h2>
-  <div id="autoUpgrades"></div>
+    <h1>💧 Water: <span id="water">0</span></h1>
+    <h3>Multiplier: <span id="multiplier">1</span> | Auto: <span id="autoRate">0</span>/s</h3>
+    <h3>Rebirths: <span id="rebirths">0</span> | Next Rebirth: <span id="rebirthReq">1,000,000</span></h3>
+    <h3>Prestige: <span id="prestige">0</span> | Next Prestige: <span id="prestigeReq">1,000,000,000,000</span></h3>
 
-  <h2>Rebirth</h2>
-  <button id="rebirthBtn">✨ Rebirth (Reset for Power!)</button>
+    <button onclick="clickWater()">💧 Click Water</button>
+    <button onclick="rebirth()">🔄 Rebirth</button>
+    <button onclick="prestige()">✨ Prestige</button>
+    <br>
+    <button onclick="saveGame()">💾 Save</button>
+    <button onclick="loadAccount()">📂 Load</button>
+    <button onclick="resetAccount()">⚠️ Hard Reset</button>
 
-  <h2>Leaderboard</h2>
-  <div id="leaderboard"></div>
+    <h2>⚡ Click Upgrades</h2>
+    <div id="clickUpgrades"></div>
 
-  <script>
-    let water = 0;
-    let multiplier = 1;
-    let autoRate = 0;
-    let rebirths = 0;
-    let rebirthMultiplier = 1;
-    let rebirthRequirement = 1e6; // 1M
-    let playerName;
+    <h2>🌊 Auto Upgrades</h2>
+    <div id="autoUpgrades"></div>
 
-    // Random name generator
-    function generateName() {
-      const names = ["WaveRider", "AquaKing", "TideMaster", "KrakenLord", "Poseidon", "HydroHero", "WaterMage"];
-      const rand = Math.floor(Math.random() * names.length);
-      return names[rand] + Math.floor(Math.random() * 1000);
-    }
+    <h2>🏆 Leaderboard</h2>
+    <div id="leaderboard"></div>
+  </div>
 
-    // Load or create player
-    if (!localStorage.getItem("playerName")) {
-      playerName = generateName();
-      localStorage.setItem("playerName", playerName);
-    } else {
-      playerName = localStorage.getItem("playerName");
-    }
-    document.getElementById("playerName").textContent = playerName;
+<script>
+let water = 0;
+let multiplier = 1;
+let autoRate = 0;
+let rebirths = 0;
+let rebirthMultiplier = 1;
+let rebirthRequirement = 1e6;
+let prestiges = 0;
+let prestigeMultiplier = 1;
+let prestigeRequirement = 1e12;
+let currentUser = null;
 
-    // --- CLICK UPGRADES (rebalance: massive scaling) ---
-    const clickUpgrades = [
-      { name: "Splash", effect: 2, cost: 15 },
-      { name: "Soak", effect: 5, cost: 40 },
-      { name: "Gush", effect: 10, cost: 75 },
-      { name: "Surge", effect: 25, cost: 150 },
-      { name: "Torrent", effect: 50, cost: 300 },
-      { name: "Cascade", effect: 100, cost: 600 },
-      { name: "Deluge", effect: 500, cost: 1200 },
-      { name: "Breaker", effect: 1_000, cost: 2500 },
-      { name: "Typhoon", effect: 5_000, cost: 5000 },
-      { name: "Cyclone", effect: 10_000, cost: 10000 },
-      { name: "Maelstrom", effect: 50_000, cost: 25000 },
-      { name: "Abyss", effect: 100_000, cost: 50000 },
-      { name: "Trench", effect: 500_000, cost: 100000 },
-      { name: "Megatsunami", effect: 1_000_000, cost: 250000 },
-      { name: "Leviathan", effect: 5_000_000, cost: 500000 },
-      { name: "Tsunami Titan", effect: 10_000_000, cost: 1_000_000 },
-      { name: "Ocean Colossus", effect: 50_000_000, cost: 2_500_000 },
-      { name: "Poseidon", effect: 100_000_000, cost: 5_000_000 },
-      { name: "Kraken Titan", effect: 500_000_000, cost: 10_000_000 },
-      { name: "Maelstrom Emperor", effect: 1_000_000_000, cost: 25_000_000 },
-      { name: "Leviathan Overlord", effect: 5_000_000_000, cost: 50_000_000 },
-      { name: "Apocalypse Flood", effect: 10_000_000_000, cost: 100_000_000 },
-      { name: "Infinity Surge", effect: 10_000_000_000_000, cost: 1e21 }
-    ];
+// --- CLICK UPGRADES ---
+const clickUpgrades = [
+  { name: "Splash", effect: 2, cost: 15, level: 0 },
+  { name: "Soak", effect: 5, cost: 40, level: 0 },
+  { name: "Gush", effect: 10, cost: 75, level: 0 },
+  { name: "Surge", effect: 25, cost: 150, level: 0 },
+  { name: "Torrent", effect: 50, cost: 300, level: 0 },
+  { name: "Cascade", effect: 100, cost: 600, level: 0 },
+  { name: "Deluge", effect: 500, cost: 1200, level: 0 },
+  { name: "Breaker", effect: 1000, cost: 2500, level: 0 },
+  { name: "Typhoon", effect: 5000, cost: 5000, level: 0 },
+  { name: "Cyclone", effect: 10000, cost: 10000, level: 0 },
+  { name: "Infinity Surge", effect: 1e13, cost: 1e21, level: 0 }
+];
 
-    // --- AUTO UPGRADES (rebalance: massive scaling) ---
-    const autoUpgrades = [
-      { name: "Drip", effect: 1, cost: 10 },
-      { name: "Droplet", effect: 2, cost: 20 },
-      { name: "Puddle", effect: 5, cost: 50 },
-      { name: "Stream", effect: 10, cost: 100 },
-      { name: "Brook", effect: 25, cost: 200 },
-      { name: "River", effect: 100, cost: 500 },
-      { name: "Waterfall", effect: 250, cost: 1000 },
-      { name: "Wave", effect: 1000, cost: 2000 },
-      { name: "Tide", effect: 5_000, cost: 5000 },
-      { name: "Current", effect: 10_000, cost: 10000 },
-      { name: "Whirlpool", effect: 50_000, cost: 25000 },
-      { name: "Flood", effect: 100_000, cost: 50000 },
-      { name: "Monsoon", effect: 500_000, cost: 100000 },
-      { name: "Ocean", effect: 1_000_000, cost: 250000 },
-      { name: "Tsunami", effect: 5_000_000, cost: 500000 },
-      { name: "Abyss", effect: 10_000_000, cost: 1_000_000 },
-      { name: "Trench", effect: 50_000_000, cost: 2_500_000 },
-      { name: "Megatsunami", effect: 100_000_000, cost: 5_000_000 },
-      { name: "Leviathan", effect: 500_000_000, cost: 10_000_000 },
-      { name: "Whirlpool King", effect: 1_000_000_000, cost: 25_000_000 },
-      { name: "Tsunami Lord", effect: 5_000_000_000, cost: 50_000_000 },
-      { name: "Ocean Emperor", effect: 10_000_000_000, cost: 100_000_000 },
-      { name: "Poseidon", effect: 50_000_000_000, cost: 250_000_000 },
-      { name: "Kraken", effect: 100_000_000_000, cost: 500_000_000 },
-      { name: "Maelstrom Titan", effect: 500_000_000_000, cost: 1_000_000_000 },
-      { name: "Leviathan King", effect: 1_000_000_000_000, cost: 2_500_000_000 },
-      { name: "Tsunami Overlord", effect: 5_000_000_000_000, cost: 5_000_000_000 },
-      { name: "Ocean Colossus", effect: 10_000_000_000_000, cost: 10_000_000_000 },
-      { name: "Abyssal Titan", effect: 50_000_000_000_000, cost: 25_000_000_000 },
-      { name: "Trench Lord", effect: 100_000_000_000_000, cost: 50_000_000_000 },
-      { name: "Megatsunami Titan", effect: 500_000_000_000_000, cost: 100_000_000_000 },
-      { name: "Leviathan Emperor", effect: 1_000_000_000_000_000, cost: 250_000_000_000 },
-      { name: "Whirlpool Overlord", effect: 5_000_000_000_000_000, cost: 500_000_000_000 },
-      { name: "Tsunami Colossus", effect: 10_000_000_000_000_000, cost: 1e12 },
-      { name: "Ocean Overlord", effect: 50_000_000_000_000_000, cost: 2.5e12 },
-      { name: "Poseidon King", effect: 100_000_000_000_000_000, cost: 5e12 },
-      { name: "Kraken Titan", effect: 500_000_000_000_000_000, cost: 1e13 },
-      { name: "Maelstrom Emperor", effect: 1_000_000_000_000_000_000, cost: 2.5e13 },
-      { name: "Leviathan Overlord", effect: 5_000_000_000_000_000_000, cost: 5e13 },
-      { name: "Tsunami Titan", effect: 1e19, cost: 1e14 },
-      { name: "Ocean Titan", effect: 5e19, cost: 2.5e14 },
-      { name: "Poseidon Overlord", effect: 1e20, cost: 5e14 },
-      { name: "Leviathan King", effect: 5e20, cost: 1e15 },
-      { name: "Apocalypse Flood", effect: 1e21, cost: 2.5e15 },
-      { name: "Infinity Tide", effect: 5e22, cost: 1e24 }
-    ];
+// --- AUTO UPGRADES ---
+const autoUpgrades = [
+  { name: "Drip", effect: 1, cost: 10, level: 0 },
+  { name: "Stream", effect: 10, cost: 100, level: 0 },
+  { name: "River", effect: 100, cost: 500, level: 0 },
+  { name: "Wave", effect: 2000, cost: 2000, level: 0 },
+  { name: "Tide", effect: 10000, cost: 5000, level: 0 },
+  { name: "Whirlpool", effect: 50000, cost: 25000, level: 0 },
+  { name: "Monsoon", effect: 1_000_000, cost: 100000, level: 0 },
+  { name: "Ocean", effect: 5_000_000, cost: 250000, level: 0 },
+  { name: "Tsunami", effect: 50_000_000, cost: 500000, level: 0 },
+  { name: "Infinity Tide", effect: 5e12, cost: 1e24, level: 0 }
+];
 
-    // --- Render upgrades dynamically ---
-    function renderUpgrades() {
-      const clickDiv = document.getElementById("clickUpgrades");
-      clickUpgrades.forEach((upg, i) => {
-        upg.level = 0;
-        const btn = document.createElement("button");
-        btn.className = "upgrade";
-        btn.id = "clickUpg" + i;
-        btn.textContent = `${upg.name} (x${upg.effect}, Cost: ${upg.cost}, Lv: 0)`;
-        btn.onclick = () => buyUpgrade(clickUpgrades, i, "click");
-        clickDiv.appendChild(btn);
-      });
+// --- GAME LOOP ---
+function clickWater() {
+  water += multiplier * rebirthMultiplier * prestigeMultiplier;
+  updateDisplay();
+}
 
-      const autoDiv = document.getElementById("autoUpgrades");
-      autoUpgrades.forEach((upg, i) => {
-        upg.level = 0;
-        const btn = document.createElement("button");
-        btn.className = "upgrade";
-        btn.id = "autoUpg" + i;
-        btn.textContent = `${upg.name} (+${upg.effect}/s, Cost: ${upg.cost}, Lv: 0)`;
-        btn.onclick = () => buyUpgrade(autoUpgrades, i, "auto");
-        autoDiv.appendChild(btn);
-      });
-    }
+setInterval(() => {
+  water += autoRate * rebirthMultiplier * prestigeMultiplier;
+  updateDisplay();
+}, 1000);
 
-    // --- Buy upgrades (multi-buy with scaling) ---
-    function buyUpgrade(list, index, type) {
-      const upg = list[index];
-      if (water >= upg.cost) {
-        water -= upg.cost;
-        upg.level++;
-        if (type === "click") {
-          multiplier *= upg.effect;
-        } else if (type === "auto") {
-          autoRate += upg.effect;
-        }
-        upg.cost = Math.floor(upg.cost * 1.5); // scale cost
-        document.getElementById(type + "Upg" + index).textContent =
-          `${upg.name} (${type === "click" ? "x" + upg.effect : "+" + upg.effect + "/s"}, Cost: ${upg.cost}, Lv: ${upg.level})`;
-        updateDisplay();
-      }
-    }
+// --- REBIRTH ---
+function rebirth() {
+  if (water >= rebirthRequirement && rebirths < 10) {
+    rebirths++;
+    rebirthMultiplier *= 2;
+    water = 0; multiplier = 1; autoRate = 0;
+    clickUpgrades.forEach(u => u.level = 0);
+    autoUpgrades.forEach(u => u.level = 0);
+    rebirthRequirement *= 100;
+    alert("Rebirth successful! Total rebirths: " + rebirths);
+    saveGame(); updateDisplay();
+  }
+}
 
-    // --- Manual click ---
-    document.getElementById("drop").addEventListener("click", () => {
-      water += multiplier * rebirthMultiplier;
+// --- PRESTIGE ---
+function prestige() {
+  if (rebirths >= 10 && water >= prestigeRequirement) {
+    prestiges++;
+    prestigeMultiplier *= 10;
+    rebirths = 0; rebirthMultiplier = 1;
+    water = 0; multiplier = 1; autoRate = 0;
+    rebirthRequirement = 1e6; prestigeRequirement *= 100;
+    clickUpgrades.forEach(u => u.level = 0);
+    autoUpgrades.forEach(u => u.level = 0);
+    alert("✨ Prestige unlocked! Total prestiges: " + prestiges);
+    saveGame(); updateDisplay();
+  }
+}
+
+// --- BUY UPGRADE ---
+function buyUpgrade(list, index) {
+  const u = list[index];
+  if (water >= u.cost) {
+    water -= u.cost;
+    if (list === clickUpgrades) multiplier *= u.effect;
+    else autoRate += u.effect;
+    u.level++; u.cost = Math.floor(u.cost * 1.5);
+    updateDisplay(); saveGame();
+  }
+}
+
+// --- UI UPDATE ---
+function updateDisplay() {
+  document.getElementById("water").innerText = water.toLocaleString();
+  document.getElementById("multiplier").innerText = multiplier.toLocaleString();
+  document.getElementById("autoRate").innerText = autoRate.toLocaleString();
+  document.getElementById("rebirths").innerText = rebirths;
+  document.getElementById("rebirthReq").innerText = rebirthRequirement.toLocaleString();
+  document.getElementById("prestige").innerText = prestiges;
+  document.getElementById("prestigeReq").innerText = prestigeRequirement.toLocaleString();
+
+  const clickDiv = document.getElementById("clickUpgrades");
+  clickDiv.innerHTML = "";
+  clickUpgrades.forEach((u, i) => {
+    clickDiv.innerHTML += `<div class="upgrade">${u.name} (x${u.effect}) | Cost: ${u.cost.toLocaleString()} | Lv: ${u.level}
+      <button onclick="buyUpgrade(clickUpgrades, ${i})">Buy</button></div>`;
+  });
+
+  const autoDiv = document.getElementById("autoUpgrades");
+  autoDiv.innerHTML = "";
+  autoUpgrades.forEach((u, i) => {
+    autoDiv.innerHTML += `<div class="upgrade">${u.name} (+${u.effect}/s) | Cost: ${u.cost.toLocaleString()} | Lv: ${u.level}
+      <button onclick="buyUpgrade(autoUpgrades, ${i})">Buy</button></div>`;
+  });
+
+  updateLeaderboard();
+}
+
+// --- SAVE / LOAD ---
+function saveGame() {
+  if (!currentUser) return;
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  accounts[currentUser].data = { 
+    water, multiplier, autoRate, rebirths, rebirthMultiplier, rebirthRequirement,
+    prestiges, prestigeMultiplier, prestigeRequirement, 
+    clickUpgrades, autoUpgrades 
+  };
+  localStorage.setItem("accounts", JSON.stringify(accounts));
+}
+
+function loadAccount() {
+  if (!currentUser) return;
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  loadGame(accounts[currentUser].data); updateDisplay();
+}
+
+function loadGame(data) {
+  if (!data) return;
+  water = data.water || 0;
+  multiplier = data.multiplier || 1;
+  autoRate = data.autoRate || 0;
+  rebirths = data.rebirths || 0;
+  rebirthMultiplier = data.rebirthMultiplier || 1;
+  rebirthRequirement = data.rebirthRequirement || 1e6;
+  prestiges = data.prestiges || 0;
+  prestigeMultiplier = data.prestigeMultiplier || 1;
+  prestigeRequirement = data.prestigeRequirement || 1e12;
+  if (data.clickUpgrades) clickUpgrades.forEach((u, i) => Object.assign(u, data.clickUpgrades[i]));
+  if (data.autoUpgrades) autoUpgrades.forEach((u, i) => Object.assign(u, data.autoUpgrades[i]));
+}
+
+// --- LOGIN SYSTEM ---
+function login() {
+  const username = document.getElementById("loginName").value.trim();
+  const password = document.getElementById("loginPass").value;
+  if (!username || !password) { alert("Enter both username and password!"); return; }
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  if (accounts[username]) {
+    if (accounts[username].password === password) {
+      currentUser = username;
+      loadGame(accounts[username].data);
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("gameScreen").style.display = "block";
+      document.getElementById("playerNameDisplay").innerText = "Player: " + username;
       updateDisplay();
-    });
+    } else alert("Wrong password!");
+  } else alert("Account not found. Please register.");
+}
 
-    // --- Auto clicks ---
-    setInterval(() => {
-      water += autoRate * rebirthMultiplier;
-      updateDisplay();
-    }, 1000);
+function register() {
+  const username = document.getElementById("loginName").value.trim();
+  const password = document.getElementById("loginPass").value;
+  if (!username || !password) { alert("Enter both username and password!"); return; }
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  if (accounts[username]) { alert("Username already exists!"); return; }
+  accounts[username] = { password, data: {} };
+  localStorage.setItem("accounts", JSON.stringify(accounts));
+  alert("Account created! You can now log in.");
+}
 
-    // --- Rebirth ---
-    document.getElementById("rebirthBtn").addEventListener("click", () => {
-      if (rebirths >= 10) {
-        alert("Max 10 rebirths reached!");
-        return;
-      }
-      if (water >= rebirthRequirement) {
-        rebirths++;
-        rebirthMultiplier *= 2;
-        water = 0;
-        multiplier = 1;
-        autoRate = 0;
-        rebirthRequirement *= 100;
-        updateDisplay();
-        alert(`✨ Rebirth #${rebirths} complete! Power doubled.`);
-      } else {
-        alert("Not enough water to rebirth!");
-      }
-    });
+function logout() {
+  saveGame();
+  currentUser = null;
+  document.getElementById("gameScreen").style.display = "none";
+  document.getElementById("loginScreen").style.display = "block";
+}
 
-    // --- Leaderboard ---
-    function updateLeaderboard() {
-      let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-      leaderboard.push({ name: playerName, score: water });
-      leaderboard.sort((a, b) => b.score - a.score);
-      leaderboard = leaderboard.slice(0, 10);
-      localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+// --- RESET ACCOUNT ---
+function resetAccount() {
+  if (!currentUser) return;
+  if (!confirm("Are you sure you want to reset your account?")) return;
+  water = 0; multiplier = 1; autoRate = 0;
+  rebirths = 0; rebirthMultiplier = 1; rebirthRequirement = 1e6;
+  prestiges = 0; prestigeMultiplier = 1; prestigeRequirement = 1e12;
+  clickUpgrades.forEach(u => u.level = 0);
+  autoUpgrades.forEach(u => u.level = 0);
+  saveGame(); updateDisplay();
+}
 
-      const lbDiv = document.getElementById("leaderboard");
-      lbDiv.innerHTML = leaderboard.map((p, i) =>
-        `<p>#${i + 1} ${p.name}: ${p.score.toLocaleString()} water</p>`
-      ).join("");
-    }
+// --- LEADERBOARD ---
+function updateLeaderboard() {
+  const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
+  const scores = [];
+  for (let user in accounts) {
+    const d = accounts[user].data || {};
+    scores.push({ name: user, prestiges: d.prestiges || 0, rebirths: d.rebirths || 0, water: d.water || 0 });
+  }
+  scores.sort((a, b) => b.prestiges - a.prestiges || b.rebirths - a.rebirths || b.water - a.water);
+  const board = document.getElementById("leaderboard");
+  board.innerHTML = scores.slice(0, 10).map((s, i) => 
+    `${i+1}. ${s.name} - Prestige: ${s.prestiges}, Rebirths: ${s.rebirths}, Water: ${s.water.toLocaleString()}`
+  ).join("<br>");
+}
+</script>
+</body>
+</html>
 
-    setInterval(updateLeaderboard, 2000);
-
-    // --- Update UI ---
-    const waterEl = document.getElementById("water");
-    const multEl = document.getElementById("mult");
-    const autoEl = document.getElementById("auto");
-    const rbEl = document.getElementById("rebirths");
-    const rbmultEl = document.getElementById("rbmult");
-    const rbReqEl = document.getElementById("rbReq");
-
-    function updateDisplay() {
-      waterEl.textContent = water.toLocaleString();
-      multEl.textContent = multiplier.toLocaleString();
-      autoEl.textContent = autoRate.toLocaleString();
-      rbEl.textContent = rebirths;
-      rbmultEl.textContent = rebirthMultiplier.toLocaleString();
-      rbReqEl.textContent = rebirthRequirement.toLocaleString();
-    }
-
-    renderUpgrades();
-    updateDisplay();
-    updateLeaderboard();
-  </script>
 </body>
 </html>
