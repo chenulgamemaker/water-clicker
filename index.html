@@ -4,11 +4,72 @@
   <meta charset="UTF-8">
   <title>Water Clicker</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #e0f7fa; }
+    body { font-family: Arial, sans-serif; text-align: center; background: #e0f7fa; margin: 0; padding: 0; }
     #gameScreen { margin-top: 20px; }
-    .upgrade { margin: 5px; padding: 10px; border: 1px solid #00796b; border-radius: 5px; background: #b2dfdb; }
-    button { margin: 5px; padding: 10px; }
-    #leaderboard { margin-top: 20px; text-align: left; width: 300px; margin-left: auto; margin-right: auto; }
+
+    /* Water Button */
+    #waterButton {
+      display: block;
+      margin: 20px auto;
+      font-size: 28px;
+      padding: 20px 40px;
+      border-radius: 10px;
+      background: #4fc3f7;
+      border: 2px solid #0288d1;
+      cursor: pointer;
+    }
+
+    /* Upgrade Panels */
+    #upgradePanels {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      height: 400px;
+      margin-top: 20px;
+    }
+    #clickUpgrades, #autoUpgrades {
+      flex: 1;
+      overflow-y: scroll;
+      border-radius: 5px;
+      padding: 10px;
+      height: 100%;
+    }
+    #clickUpgrades {
+      border: 2px solid #00796b;
+      background: #b2dfdb;
+    }
+    #autoUpgrades {
+      border: 2px solid #004d40;
+      background: #80cbc4;
+    }
+
+    .upgrade {
+      margin: 5px 0;
+      padding: 8px;
+      border: 1px solid #004d40;
+      border-radius: 5px;
+      background: #e0f2f1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .upgrade button {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    /* Leaderboard */
+    #leaderboard {
+      margin-top: 20px;
+      text-align: left;
+      width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Login Screen */
+    #loginScreen input { margin: 5px; padding: 10px; }
+    #loginScreen button { margin: 5px; padding: 10px; }
   </style>
 </head>
 <body>
@@ -28,12 +89,12 @@
     <button onclick="logout()">Logout</button>
     <hr>
 
+    <!-- Water Button & Stats -->
+    <button id="waterButton" onclick="clickWater()">💧 Click Water</button>
     <h1>💧 Water: <span id="water">0</span></h1>
     <h3>Multiplier: <span id="multiplier">1</span> | Auto: <span id="autoRate">0</span>/s</h3>
     <h3>Rebirths: <span id="rebirths">0</span> | Next Rebirth: <span id="rebirthReq">1,000,000</span></h3>
     <h3>Prestige: <span id="prestige">0</span> | Next Prestige: <span id="prestigeReq">1,000,000,000,000</span></h3>
-
-    <button onclick="clickWater()">💧 Click Water</button>
     <button onclick="rebirth()">🔄 Rebirth</button>
     <button onclick="prestige()">✨ Prestige</button>
     <br>
@@ -41,30 +102,26 @@
     <button onclick="loadAccount()">📂 Load</button>
     <button onclick="resetAccount()">⚠️ Hard Reset</button>
 
-    <h2>⚡ Click Upgrades</h2>
-    <div id="clickUpgrades"></div>
+    <!-- Upgrade Panels -->
+    <h2>⚡ Upgrades</h2>
+    <div id="upgradePanels">
+      <div id="clickUpgrades"><h3>Clicker Upgrades</h3></div>
+      <div id="autoUpgrades"><h3>Auto Upgrades</h3></div>
+    </div>
 
-    <h2>🌊 Auto Upgrades</h2>
-    <div id="autoUpgrades"></div>
-
+    <!-- Leaderboard -->
     <h2>🏆 Leaderboard</h2>
     <div id="leaderboard"></div>
   </div>
 
 <script>
-let water = 0;
-let multiplier = 1;
-let autoRate = 0;
-let rebirths = 0;
-let rebirthMultiplier = 1;
-let rebirthRequirement = 1e6;
-let prestiges = 0;
-let prestigeMultiplier = 1;
-let prestigeRequirement = 1e12;
+let water = 0, multiplier = 1, autoRate = 0;
+let rebirths = 0, rebirthMultiplier = 1, rebirthRequirement = 1e6;
+let prestiges = 0, prestigeMultiplier = 1, prestigeRequirement = 1e12;
 let currentUser = null;
 
 // --- CLICK UPGRADES ---
-const clickUpgrades = [
+const autoClickers = [
   { name: "Drip", effect: 2, cost: 5, level: 0 },
   { name: "Splash", effect: 5, cost: 10, level: 0 },
   { name: "Droplet", effect: 10, cost: 20, level: 0 },
@@ -129,7 +186,8 @@ const clickUpgrades = [
   { name: "Infinity Ocean Emperor", effect: 5e20, cost: 1e21, level: 0 }
 ];
 
-// --- AUTO UPGRADES ---
+
+// --- AUTO-UPGRADES ---
 const autoClickers = [
   { name: "Drizzle", effect: 5, cost: 10, level: 0 },
   { name: "Trickle", effect: 15, cost: 30, level: 0 },
@@ -188,13 +246,11 @@ const autoClickers = [
   { name: "Supernova Ocean Prime", effect: 3e22, cost: 6e22, level: 0 }
 ];
 
-
 // --- GAME LOOP ---
 function clickWater() {
   water += multiplier * rebirthMultiplier * prestigeMultiplier;
   updateDisplay();
 }
-
 setInterval(() => {
   water += autoRate * rebirthMultiplier * prestigeMultiplier;
   updateDisplay();
@@ -203,8 +259,7 @@ setInterval(() => {
 // --- REBIRTH ---
 function rebirth() {
   if (water >= rebirthRequirement && rebirths < 10) {
-    rebirths++;
-    rebirthMultiplier *= 2;
+    rebirths++; rebirthMultiplier *= 2;
     water = 0; multiplier = 1; autoRate = 0;
     clickUpgrades.forEach(u => u.level = 0);
     autoUpgrades.forEach(u => u.level = 0);
@@ -217,8 +272,7 @@ function rebirth() {
 // --- PRESTIGE ---
 function prestige() {
   if (rebirths >= 10 && water >= prestigeRequirement) {
-    prestiges++;
-    prestigeMultiplier *= 10;
+    prestiges++; prestigeMultiplier *= 10;
     rebirths = 0; rebirthMultiplier = 1;
     water = 0; multiplier = 1; autoRate = 0;
     rebirthRequirement = 1e6; prestigeRequirement *= 100;
@@ -241,7 +295,7 @@ function buyUpgrade(list, index) {
   }
 }
 
-// --- UI UPDATE ---
+// --- UPDATE DISPLAY ---
 function updateDisplay() {
   document.getElementById("water").innerText = water.toLocaleString();
   document.getElementById("multiplier").innerText = multiplier.toLocaleString();
@@ -252,14 +306,14 @@ function updateDisplay() {
   document.getElementById("prestigeReq").innerText = prestigeRequirement.toLocaleString();
 
   const clickDiv = document.getElementById("clickUpgrades");
-  clickDiv.innerHTML = "";
+  clickDiv.innerHTML = "<h3>Clicker Upgrades</h3>";
   clickUpgrades.forEach((u, i) => {
     clickDiv.innerHTML += `<div class="upgrade">${u.name} (x${u.effect}) | Cost: ${u.cost.toLocaleString()} | Lv: ${u.level}
       <button onclick="buyUpgrade(clickUpgrades, ${i})">Buy</button></div>`;
   });
 
   const autoDiv = document.getElementById("autoUpgrades");
-  autoDiv.innerHTML = "";
+  autoDiv.innerHTML = "<h3>Auto Upgrades</h3>";
   autoUpgrades.forEach((u, i) => {
     autoDiv.innerHTML += `<div class="upgrade">${u.name} (+${u.effect}/s) | Cost: ${u.cost.toLocaleString()} | Lv: ${u.level}
       <button onclick="buyUpgrade(autoUpgrades, ${i})">Buy</button></div>`;
@@ -279,13 +333,11 @@ function saveGame() {
   };
   localStorage.setItem("accounts", JSON.stringify(accounts));
 }
-
 function loadAccount() {
   if (!currentUser) return;
   const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
   loadGame(accounts[currentUser].data); updateDisplay();
 }
-
 function loadGame(data) {
   if (!data) return;
   water = data.water || 0;
@@ -318,7 +370,6 @@ function login() {
     } else alert("Wrong password!");
   } else alert("Account not found. Please register.");
 }
-
 function register() {
   const username = document.getElementById("loginName").value.trim();
   const password = document.getElementById("loginPass").value;
@@ -329,7 +380,6 @@ function register() {
   localStorage.setItem("accounts", JSON.stringify(accounts));
   alert("Account created! You can now log in.");
 }
-
 function logout() {
   saveGame();
   currentUser = null;
@@ -364,8 +414,5 @@ function updateLeaderboard() {
   ).join("<br>");
 }
 </script>
-</body>
-</html>
-
 </body>
 </html>
