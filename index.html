@@ -1,127 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Water Clicker</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #e0f7fa; margin: 0; padding: 0; }
-    #gameScreen { margin-top: 20px; }
-
-    /* Water Button */
-    #waterButton {
-      display: block;
-      margin: 20px auto;
-      font-size: 28px;
-      padding: 20px 40px;
-      border-radius: 10px;
-      background: #4fc3f7;
-      border: 2px solid #0288d1;
-      cursor: pointer;
-    }
-
-    /* Upgrade Panels */
-    #upgradePanels {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      height: 400px;
-      margin-top: 20px;
-    }
-    #clickUpgrades, #autoUpgrades {
-      flex: 1;
-      overflow-y: scroll;
-      border-radius: 5px;
-      padding: 10px;
-      height: 100%;
-    }
-    #clickUpgrades {
-      border: 2px solid #00796b;
-      background: #b2dfdb;
-    }
-    #autoUpgrades {
-      border: 2px solid #004d40;
-      background: #80cbc4;
-    }
-
-    .upgrade {
-      margin: 5px 0;
-      padding: 8px;
-      border: 1px solid #004d40;
-      border-radius: 5px;
-      background: #e0f2f1;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .upgrade button {
-      padding: 5px 10px;
-      cursor: pointer;
-    }
-
-    /* Leaderboard */
-    #leaderboard {
-      margin-top: 20px;
-      text-align: left;
-      width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    /* Login Screen */
-    #loginScreen input { margin: 5px; padding: 10px; }
-    #loginScreen button { margin: 5px; padding: 10px; }
-  </style>
+<meta charset="UTF-8">
+<title>Water Clicker</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; background: #e0f7fa; margin: 0; }
+  button { margin: 5px; padding: 10px; cursor: pointer; }
+  #upgradesContainer { display: flex; justify-content: center; gap: 20px; margin-top: 10px; }
+  .upgradeColumn { max-height: 400px; overflow-y: auto; width: 250px; background: #b2dfdb; padding: 10px; border-radius: 5px; }
+  .upgrade { margin: 5px 0; padding: 5px; border: 1px solid #00796b; border-radius: 5px; background: #e0f2f1; }
+  #waterButtonContainer { margin-top: 20px; }
+  #leaderboard { margin-top: 20px; text-align: left; width: 300px; margin-left: auto; margin-right: auto; }
+</style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginScreen">
-    <h2>🌊 Water Clicker - Login</h2>
-    <input id="loginName" type="text" placeholder="Username"><br>
-    <input id="loginPass" type="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <h2>🌊 Water Clicker - Login</h2>
+  <input id="loginName" type="text" placeholder="Username"><br>
+  <input id="loginPass" type="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="register()">Register</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" style="display:none;">
+  <h2 id="playerNameDisplay"></h2>
+  <button onclick="logout()">Logout</button>
+  <hr>
+
+  <h1>💧 Water: <span id="water">0</span></h1>
+  <h3>Multiplier: <span id="multiplier">1</span> | Auto: <span id="autoRate">0</span>/s</h3>
+  <h3>Rebirths: <span id="rebirths">0</span> | Next Rebirth: <span id="rebirthReq">1,000,000</span></h3>
+  <h3>Prestige: <span id="prestige">0</span> | Next Prestige: <span id="prestigeReq">1,000,000,000,000</span></h3>
+
+  <div id="waterButtonContainer">
+    <button onclick="clickWater()" style="font-size:24px; padding: 20px 40px;">💧 Click Water</button>
   </div>
 
-  <!-- GAME SCREEN -->
-  <div id="gameScreen" style="display:none;">
-    <h2 id="playerNameDisplay"></h2>
-    <button onclick="logout()">Logout</button>
-    <hr>
+  <button onclick="rebirth()">🔄 Rebirth</button>
+  <button onclick="prestige()">✨ Prestige</button>
+  <br>
+  <button onclick="saveGame()">💾 Save</button>
+  <button onclick="loadAccount()">📂 Load</button>
+  <button onclick="resetAccount()">⚠️ Hard Reset</button>
 
-    <!-- Water Button & Stats -->
-    <button id="waterButton" onclick="clickWater()">💧 Click Water</button>
-    <h1>💧 Water: <span id="water">0</span></h1>
-    <h3>Multiplier: <span id="multiplier">1</span> | Auto: <span id="autoRate">0</span>/s</h3>
-    <h3>Rebirths: <span id="rebirths">0</span> | Next Rebirth: <span id="rebirthReq">1,000,000</span></h3>
-    <h3>Prestige: <span id="prestige">0</span> | Next Prestige: <span id="prestigeReq">1,000,000,000,000</span></h3>
-    <button onclick="rebirth()">🔄 Rebirth</button>
-    <button onclick="prestige()">✨ Prestige</button>
-    <br>
-    <button onclick="saveGame()">💾 Save</button>
-    <button onclick="loadAccount()">📂 Load</button>
-    <button onclick="resetAccount()">⚠️ Hard Reset</button>
-
-    <!-- Upgrade Panels -->
-    <h2>⚡ Upgrades</h2>
-    <div id="upgradePanels">
-      <div id="clickUpgrades"><h3>Clicker Upgrades</h3></div>
-      <div id="autoUpgrades"><h3>Auto Upgrades</h3></div>
-    </div>
-
-    <!-- Leaderboard -->
-    <h2>🏆 Leaderboard</h2>
-    <div id="leaderboard"></div>
+  <div id="upgradesContainer">
+    <div class="upgradeColumn" id="clickUpgrades"></div>
+    <div class="upgradeColumn" id="autoUpgrades"></div>
   </div>
+
+  <h2>🏆 Leaderboard</h2>
+  <div id="leaderboard"></div>
+</div>
 
 <script>
-let water = 0, multiplier = 1, autoRate = 0;
-let rebirths = 0, rebirthMultiplier = 1, rebirthRequirement = 1e6;
-let prestiges = 0, prestigeMultiplier = 1, prestigeRequirement = 1e12;
+let water = 0;
+let multiplier = 1;
+let autoRate = 0;
+let rebirths = 0;
+let rebirthMultiplier = 1;
+let rebirthRequirement = 1e6;
+let prestiges = 0;
+let prestigeMultiplier = 1;
+let prestigeRequirement = 1e12;
 let currentUser = null;
 
 // --- CLICK UPGRADES ---
-const autoClickers = [
+const clickUpgrades = [
+  { name: "Drizzle", effect: 5, cost: 10, level: 0 },
+  { name: "Trickle", effect: 15, cost: 30, level: 0 },
+  { name: "Rill", effect: 50, cost: 120, level: 0 },
+  { name: "Brooklet", effect: 120, cost: 300, level: 0 },
+  { name: "Creek", effect: 300, cost: 750, level: 0 },
+  { name: "Stream", effect: 750, cost: 1500, level: 0 },
+  { name: "River", effect: 2000, cost: 4000, level: 0 },
+  { name: "Rapids", effect: 5000, cost: 10000, level: 0 },
+  { name: "Waterfall", effect: 12000, cost: 25000, level: 0 },
+  { name: "Wave", effect: 30000, cost: 60000, level: 0 },
+  { name: "Tide", effect: 75000, cost: 150000, level: 0 },
+  { name: "Whirlpool", effect: 200000, cost: 400000, level: 0 },
+  { name: "Flood", effect: 500000, cost: 1e6, level: 0 },
+  { name: "Monsoon", effect: 1.2e6, cost: 2.5e6, level: 0 },
+  { name: "Tsunami", effect: 3e6, cost: 6e6, level: 0 },
+  { name: "Leviathan", effect: 7.5e6, cost: 1.5e7, level: 0 },
+  { name: "Poseidon", effect: 2e7, cost: 4e7, level: 0 },
+  { name: "Ocean Colossus", effect: 5e7, cost: 1e8, level: 0 },
+  { name: "Maelstrom Titan", effect: 1.2e8, cost: 2.5e8, level: 0 },
+  { name: "Typhoon King", effect: 3e8, cost: 6e8, level: 0 },
+  { name: "Abyssal Wave", effect: 7.5e8, cost: 1.5e9, level: 0 },
+  { name: "Cosmic Tide", effect: 2e9, cost: 4e9, level: 0 },
+  { name: "Galactic Flood", effect: 5e9, cost: 1e10, level: 0 },
+  { name: "Eternal Stream", effect: 1.2e10, cost: 2.5e10, level: 0 },
+  { name: "Leviathan Prime", effect: 3e10, cost: 6e10, level: 0 },
+  { name: "Poseidon Ultima", effect: 7.5e10, cost: 1.5e11, level: 0 },
+  { name: "Omega Wave", effect: 2e11, cost: 4e11, level: 0 },
+  { name: "Tidal Titan", effect: 5e11, cost: 1e12, level: 0 },
+  { name: "Supernova Flood", effect: 1.2e12, cost: 2.5e12, level: 0 },
+  { name: "Cosmic Maelstrom", effect: 3e12, cost: 6e12, level: 0 },
+  { name: "Infinity Tsunami", effect: 7.5e12, cost: 1.5e13, level: 0 },
+  { name: "Omega Leviathan", effect: 2e13, cost: 4e13, level: 0 },
+  { name: "Eternal Wave", effect: 5e13, cost: 1e14, level: 0 },
+  { name: "Poseidon King", effect: 1.2e14, cost: 2.5e14, level: 0 },
+  { name: "Abyssal Titan", effect: 3e14, cost: 6e14, level: 0 },
+  { name: "Galactic Leviathan", effect: 7.5e14, cost: 1.5e15, level: 0 },
+  { name: "Omega Tide", effect: 2e15, cost: 4e15, level: 0 },
+  { name: "Infinity Wave", effect: 5e15, cost: 1e16, level: 0 },
+  { name: "Supernova Tide", effect: 1.2e16, cost: 2.5e16, level: 0 },
+  { name: "Cosmic Ocean", effect: 3e16, cost: 6e16, level: 0 },
+  { name: "Eternal Leviathan", effect: 7.5e16, cost: 1.5e17, level: 0 },
+  { name: "Omega Ocean", effect: 2e17, cost: 4e17, level: 0 },
+  { name: "Infinity Flood", effect: 5e17, cost: 1e18, level: 0 },
+  { name: "Galactic Ocean", effect: 1.2e18, cost: 2.5e18, level: 0 },
+  { name: "Tsunami King", effect: 3e18, cost: 6e18, level: 0 },
+  { name: "Abyssal Leviathan Prime", effect: 7.5e18, cost: 1.5e19, level: 0 },
+  { name: "Poseidon Emperor", effect: 2e19, cost: 4e19, level: 0 },
+  { name: "Omega Leviathan Prime", effect: 5e19, cost: 1e20, level: 0 },
+  { name: "Infinity Ocean Prime", effect: 1.2e20, cost: 2.5e20, level: 0 },
+  { name: "Supernova Leviathan", effect: 3e20, cost: 6e20, level: 0 },
+  { name: "Cosmic Leviathan Prime", effect: 7.5e20, cost: 1.5e21, level: 0 },
+  { name: "Eternal Flood", effect: 2e21, cost: 4e21, level: 0 },
+  { name: "Omega Flood Prime", effect: 5e21, cost: 1e22, level: 0 },
+  { name: "Infinity Leviathan Prime", effect: 1.2e22, cost: 2.5e22, level: 0 },
+  { name: "Supernova Ocean Prime", effect: 3e22, cost: 6e22, level: 0 }
+];
+
+// --- AUTO UPGRADES ---
+const autoUpgrades = [
   { name: "Drip", effect: 2, cost: 5, level: 0 },
   { name: "Splash", effect: 5, cost: 10, level: 0 },
   { name: "Droplet", effect: 10, cost: 20, level: 0 },
@@ -186,71 +192,12 @@ const autoClickers = [
   { name: "Infinity Ocean Emperor", effect: 5e20, cost: 1e21, level: 0 }
 ];
 
-
-// --- AUTO-UPGRADES ---
-const autoClickers = [
-  { name: "Drizzle", effect: 5, cost: 10, level: 0 },
-  { name: "Trickle", effect: 15, cost: 30, level: 0 },
-  { name: "Rill", effect: 50, cost: 120, level: 0 },
-  { name: "Brooklet", effect: 120, cost: 300, level: 0 },
-  { name: "Creek", effect: 300, cost: 750, level: 0 },
-  { name: "Stream", effect: 750, cost: 1500, level: 0 },
-  { name: "River", effect: 2000, cost: 4000, level: 0 },
-  { name: "Rapids", effect: 5000, cost: 10000, level: 0 },
-  { name: "Waterfall", effect: 12000, cost: 25000, level: 0 },
-  { name: "Wave", effect: 30000, cost: 60000, level: 0 },
-  { name: "Tide", effect: 75000, cost: 150000, level: 0 },
-  { name: "Whirlpool", effect: 200000, cost: 400000, level: 0 },
-  { name: "Flood", effect: 500000, cost: 1e6, level: 0 },
-  { name: "Monsoon", effect: 1.2e6, cost: 2.5e6, level: 0 },
-  { name: "Tsunami", effect: 3e6, cost: 6e6, level: 0 },
-  { name: "Leviathan", effect: 7.5e6, cost: 1.5e7, level: 0 },
-  { name: "Poseidon", effect: 2e7, cost: 4e7, level: 0 },
-  { name: "Ocean Colossus", effect: 5e7, cost: 1e8, level: 0 },
-  { name: "Maelstrom Titan", effect: 1.2e8, cost: 2.5e8, level: 0 },
-  { name: "Typhoon King", effect: 3e8, cost: 6e8, level: 0 },
-  { name: "Abyssal Wave", effect: 7.5e8, cost: 1.5e9, level: 0 },
-  { name: "Cosmic Tide", effect: 2e9, cost: 4e9, level: 0 },
-  { name: "Galactic Flood", effect: 5e9, cost: 1e10, level: 0 },
-  { name: "Eternal Stream", effect: 1.2e10, cost: 2.5e10, level: 0 },
-  { name: "Leviathan Prime", effect: 3e10, cost: 6e10, level: 0 },
-  { name: "Poseidon Ultima", effect: 7.5e10, cost: 1.5e11, level: 0 },
-  { name: "Omega Wave", effect: 2e11, cost: 4e11, level: 0 },
-  { name: "Tidal Titan", effect: 5e11, cost: 1e12, level: 0 },
-  { name: "Supernova Flood", effect: 1.2e12, cost: 2.5e12, level: 0 },
-  { name: "Cosmic Maelstrom", effect: 3e12, cost: 6e12, level: 0 },
-  { name: "Infinity Tsunami", effect: 7.5e12, cost: 1.5e13, level: 0 },
-  { name: "Omega Leviathan", effect: 2e13, cost: 4e13, level: 0 },
-  { name: "Eternal Wave", effect: 5e13, cost: 1e14, level: 0 },
-  { name: "Poseidon King", effect: 1.2e14, cost: 2.5e14, level: 0 },
-  { name: "Abyssal Titan", effect: 3e14, cost: 6e14, level: 0 },
-  { name: "Galactic Leviathan", effect: 7.5e14, cost: 1.5e15, level: 0 },
-  { name: "Omega Tide", effect: 2e15, cost: 4e15, level: 0 },
-  { name: "Infinity Wave", effect: 5e15, cost: 1e16, level: 0 },
-  { name: "Supernova Tide", effect: 1.2e16, cost: 2.5e16, level: 0 },
-  { name: "Cosmic Ocean", effect: 3e16, cost: 6e16, level: 0 },
-  { name: "Eternal Leviathan", effect: 7.5e16, cost: 1.5e17, level: 0 },
-  { name: "Omega Ocean", effect: 2e17, cost: 4e17, level: 0 },
-  { name: "Infinity Flood", effect: 5e17, cost: 1e18, level: 0 },
-  { name: "Galactic Ocean", effect: 1.2e18, cost: 2.5e18, level: 0 },
-  { name: "Tsunami King", effect: 3e18, cost: 6e18, level: 0 },
-  { name: "Abyssal Leviathan Prime", effect: 7.5e18, cost: 1.5e19, level: 0 },
-  { name: "Poseidon Emperor", effect: 2e19, cost: 4e19, level: 0 },
-  { name: "Omega Leviathan Prime", effect: 5e19, cost: 1e20, level: 0 },
-  { name: "Infinity Ocean Prime", effect: 1.2e20, cost: 2.5e20, level: 0 },
-  { name: "Supernova Leviathan", effect: 3e20, cost: 6e20, level: 0 },
-  { name: "Cosmic Leviathan Prime", effect: 7.5e20, cost: 1.5e21, level: 0 },
-  { name: "Eternal Flood", effect: 2e21, cost: 4e21, level: 0 },
-  { name: "Omega Flood Prime", effect: 5e21, cost: 1e22, level: 0 },
-  { name: "Infinity Leviathan Prime", effect: 1.2e22, cost: 2.5e22, level: 0 },
-  { name: "Supernova Ocean Prime", effect: 3e22, cost: 6e22, level: 0 }
-];
-
 // --- GAME LOOP ---
 function clickWater() {
   water += multiplier * rebirthMultiplier * prestigeMultiplier;
   updateDisplay();
 }
+
 setInterval(() => {
   water += autoRate * rebirthMultiplier * prestigeMultiplier;
   updateDisplay();
@@ -259,7 +206,8 @@ setInterval(() => {
 // --- REBIRTH ---
 function rebirth() {
   if (water >= rebirthRequirement && rebirths < 10) {
-    rebirths++; rebirthMultiplier *= 2;
+    rebirths++;
+    rebirthMultiplier *= 2;
     water = 0; multiplier = 1; autoRate = 0;
     clickUpgrades.forEach(u => u.level = 0);
     autoUpgrades.forEach(u => u.level = 0);
@@ -272,7 +220,8 @@ function rebirth() {
 // --- PRESTIGE ---
 function prestige() {
   if (rebirths >= 10 && water >= prestigeRequirement) {
-    prestiges++; prestigeMultiplier *= 10;
+    prestiges++;
+    prestigeMultiplier *= 10;
     rebirths = 0; rebirthMultiplier = 1;
     water = 0; multiplier = 1; autoRate = 0;
     rebirthRequirement = 1e6; prestigeRequirement *= 100;
@@ -295,7 +244,7 @@ function buyUpgrade(list, index) {
   }
 }
 
-// --- UPDATE DISPLAY ---
+// --- UI UPDATE ---
 function updateDisplay() {
   document.getElementById("water").innerText = water.toLocaleString();
   document.getElementById("multiplier").innerText = multiplier.toLocaleString();
@@ -306,14 +255,14 @@ function updateDisplay() {
   document.getElementById("prestigeReq").innerText = prestigeRequirement.toLocaleString();
 
   const clickDiv = document.getElementById("clickUpgrades");
-  clickDiv.innerHTML = "<h3>Clicker Upgrades</h3>";
+  clickDiv.innerHTML = "";
   clickUpgrades.forEach((u, i) => {
     clickDiv.innerHTML += `<div class="upgrade">${u.name} (x${u.effect}) | Cost: ${u.cost.toLocaleString()} | Lv: ${u.level}
       <button onclick="buyUpgrade(clickUpgrades, ${i})">Buy</button></div>`;
   });
 
   const autoDiv = document.getElementById("autoUpgrades");
-  autoDiv.innerHTML = "<h3>Auto Upgrades</h3>";
+  autoDiv.innerHTML = "";
   autoUpgrades.forEach((u, i) => {
     autoDiv.innerHTML += `<div class="upgrade">${u.name} (+${u.effect}/s) | Cost: ${u.cost.toLocaleString()} | Lv: ${u.level}
       <button onclick="buyUpgrade(autoUpgrades, ${i})">Buy</button></div>`;
@@ -333,11 +282,14 @@ function saveGame() {
   };
   localStorage.setItem("accounts", JSON.stringify(accounts));
 }
+
 function loadAccount() {
   if (!currentUser) return;
   const accounts = JSON.parse(localStorage.getItem("accounts") || "{}");
-  loadGame(accounts[currentUser].data); updateDisplay();
+  if (accounts[currentUser].data) loadGame(accounts[currentUser].data);
+  updateDisplay();
 }
+
 function loadGame(data) {
   if (!data) return;
   water = data.water || 0;
@@ -362,7 +314,7 @@ function login() {
   if (accounts[username]) {
     if (accounts[username].password === password) {
       currentUser = username;
-      loadGame(accounts[username].data);
+      loadGame(accounts[username].data || {});
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("gameScreen").style.display = "block";
       document.getElementById("playerNameDisplay").innerText = "Player: " + username;
@@ -370,6 +322,7 @@ function login() {
     } else alert("Wrong password!");
   } else alert("Account not found. Please register.");
 }
+
 function register() {
   const username = document.getElementById("loginName").value.trim();
   const password = document.getElementById("loginPass").value;
@@ -380,6 +333,7 @@ function register() {
   localStorage.setItem("accounts", JSON.stringify(accounts));
   alert("Account created! You can now log in.");
 }
+
 function logout() {
   saveGame();
   currentUser = null;
@@ -414,5 +368,6 @@ function updateLeaderboard() {
   ).join("<br>");
 }
 </script>
+
 </body>
 </html>
