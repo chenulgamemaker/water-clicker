@@ -7,30 +7,36 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div id="loginDiv">
   <h2>Login</h2>
-  <input type="text" id="username" placeholder="Username"><br>
-  <input type="password" id="password" placeholder="Password"><br>
+  <input type="text" id="loginUsername" placeholder="Username">
+  <input type="password" id="loginPassword" placeholder="Password">
   <button onclick="login()">Login</button>
-  <button onclick="showRegister()">Register</button>
-</div>
-
-<div id="registerDiv" style="display:none;">
-  <h2>Register</h2>
-  <input type="text" id="regUsername" placeholder="Username"><br>
-  <input type="password" id="regPassword" placeholder="Password"><br>
+  <h3>Or Register</h3>
+  <input type="text" id="regUsername" placeholder="New Username">
+  <input type="password" id="regPassword" placeholder="Password">
   <button onclick="register()">Register</button>
-  <button onclick="showLogin()">Back to Login</button>
 </div>
 
-<div id="gameDiv" style="display:none;">
-  <h2 id="welcome">Welcome</h2>
-  <button id="waterBtn" onclick="clickWater()">💧</button>
-  <div id="waterCount">0 💧</div>
+<div id="gameDiv" style="display:none">
+  <h2 id="welcomeUser"></h2>
+  <h3>Water: <span id="waterDisplay">0</span> 💧</h3>
+  <div id="clickerDiv">
+    <button id="waterButton">💧</button>
+  </div>
   <div id="upgrades"></div>
+  <div id="autoclickers"></div>
+  <h3>Leaderboard</h3>
   <div id="leaderboard"></div>
-  <div id="adminPanel" style="display:none;"></div>
+
+  <div id="adminPanel" style="display:none">
+    <h3>Admin Panel</h3>
+    <input type="text" id="targetPlayer" placeholder="Player name">
+    <input type="number" id="setWaterAmount" placeholder="Set water">
+    <button onclick="adminSetWater()">Set Water</button>
+    <button onclick="adminSetRebirth()">Set Rebirth</button>
+    <button onclick="adminSetPrestige()">Set Prestige</button>
+  </div>
 </div>
 
 <script src="game.js"></script>
