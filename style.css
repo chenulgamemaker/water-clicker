@@ -1,46 +1,23 @@
 body {
   font-family: Arial, sans-serif;
   text-align: center;
-  background: #e0f7fa;
-  margin:0;
-  padding:20px;
+  background-color: #cceeff;
 }
 
-#waterBtn {
+#waterButton {
   font-size: 50px;
-  padding: 20px 40px;
+  padding: 20px;
   border-radius: 50%;
+  background-color: #4db8ff;
   border: none;
-  background: #00bcd4;
-  color: white;
   cursor: pointer;
-  transition: transform 0.1s;
+  margin: 20px;
 }
 
-#waterBtn:active {
-  transform: scale(0.9);
-}
-
-button {
-  padding: 8px 16px;
-  margin: 5px;
+#upgrades button, #autoclickers button {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  width: 200px;
   cursor: pointer;
-}
-
-#upgrades {
-  margin-top: 20px;
-}
-
-#leaderboard {
-  margin-top: 30px;
-  background: #b2ebf2;
-  padding: 10px;
-  border-radius: 10px;
-}
-
-#adminPanel {
-  margin-top: 20px;
-  background: #80deea;
-  padding: 10px;
-  border-radius: 10px;
 }
